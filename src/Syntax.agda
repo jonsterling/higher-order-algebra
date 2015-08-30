@@ -1,11 +1,13 @@
 module Syntax where
 
+infix 2 #_
+infix 3 _⟨_⟩
 infix 0 _⊧_▸_⊢
 infixr 0 ,_
 infixr 0 _,_
 infixr 1 _∷_
 infixr 1 _+_
-infixr 1 s_
+infix 4 s_
 infixl 0 _·_
 
 open import Agda.Primitive
@@ -42,9 +44,9 @@ data Vec {a} (A : Set a) : Nat → Set a where
   [] : Vec A z
   _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
 
-idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
-idx (x ∷ xs) z = x
-idx (x ∷ xs) (s i) = idx xs i
+nth : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
+nth (x ∷ xs) z = x
+nth (x ∷ xs) (s i) = nth xs i
 
 record Signature : Set₁ where
   field
@@ -52,17 +54,43 @@ record Signature : Set₁ where
     𝔄 : 𝒪 → ∐ Nat (Vec Nat)
 open Signature public
 
-data _⊧_▸_⊢ {n} (Σ : Signature) (Ψ : Vec Nat n) (Γ : Nat) : Set where
-  ` : Fin Γ
-    → Σ ⊧ Ψ ▸ Γ ⊢
+TCtx : Set
+TCtx = Nat
 
-  #_⟨_⟩ : (i : Fin n)
-    → Vec (Σ ⊧ Ψ ▸ Γ ⊢) (idx Ψ i)
-    → Σ ⊧ Ψ ▸ Γ ⊢
+TVar : TCtx → Set
+TVar = Fin
 
-  _·_ : ∀ (𝔣 : 𝒪 Σ)
-    → ((i : Fin (fst (𝔄 Σ 𝔣))) → Σ ⊧ Ψ ▸ Γ + idx (snd (𝔄 Σ 𝔣)) i ⊢)
-    → Σ ⊧ Ψ ▸ Γ ⊢
+MCtx : Nat → Set
+MCtx = Vec TCtx
+
+Op : Signature → Set
+Op Σ = 𝒪 Σ
+
+⊧Sp
+  : (ϕ : ∀ {n} → Signature → MCtx n → TCtx → Set)
+  → ∀ {n}
+  → (Σ : Signature)
+  → (Ψ : MCtx n)
+  → (Γ : TCtx)
+  → (𝔣 : Op Σ)
+  → Set
+⊧Sp ϕ Σ Ψ Γ 𝔣 = (i : Fin (fst (𝔄 Σ 𝔣))) → ϕ Σ Ψ (Γ + nth (snd (𝔄 Σ 𝔣)) i)
+
+mutual
+  record MVar {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) : Set where
+    inductive
+    constructor _⟨_⟩
+    field
+      idx : Fin n
+      vec : Vec (Σ ⊧ Ψ ▸ Γ ⊢) (nth Ψ idx)
+
+  Sp : ∀ {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) (𝔣 : Op Σ) → Set
+  Sp = ⊧Sp _⊧_▸_⊢
+
+  data _⊧_▸_⊢ {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) : Set where
+    ` : TVar Γ → Σ ⊧ Ψ ▸ Γ ⊢
+    #_ : MVar Σ Ψ Γ → Σ ⊧ Ψ ▸ Γ ⊢
+    _·_ : ∀ (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢
 
 module Examples where
   module Λ where
