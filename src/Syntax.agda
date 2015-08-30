@@ -48,11 +48,11 @@ nth : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
 nth (x ∷ xs) z = x
 nth (x ∷ xs) (s i) = nth xs i
 
-record Signature : Set₁ where
+record Sign : Set₁ where
   field
     𝒪 : Set₀
     𝔄 : 𝒪 → ∐ Nat (Vec Nat)
-open Signature public
+open Sign public
 
 TCtx : Set
 TCtx = Nat
@@ -63,13 +63,13 @@ TVar = Fin
 MCtx : Nat → Set
 MCtx = Vec TCtx
 
-Op : Signature → Set
+Op : Sign → Set
 Op Σ = 𝒪 Σ
 
 ⊧Sp
-  : (ϕ : ∀ {n} → Signature → MCtx n → TCtx → Set)
+  : (ϕ : ∀ {n} → Sign → MCtx n → TCtx → Set)
   → ∀ {n}
-  → (Σ : Signature)
+  → (Σ : Sign)
   → (Ψ : MCtx n)
   → (Γ : TCtx)
   → (𝔣 : Op Σ)
@@ -77,17 +77,17 @@ Op Σ = 𝒪 Σ
 ⊧Sp ϕ Σ Ψ Γ 𝔣 = (i : Fin (fst (𝔄 Σ 𝔣))) → ϕ Σ Ψ (Γ + nth (snd (𝔄 Σ 𝔣)) i)
 
 mutual
-  record MVar {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) : Set where
+  record MVar {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
     inductive
     constructor _⟨_⟩
     field
       idx : Fin n
       vec : Vec (Σ ⊧ Ψ ▸ Γ ⊢) (nth Ψ idx)
 
-  Sp : ∀ {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) (𝔣 : Op Σ) → Set
+  Sp : ∀ {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) (𝔣 : Op Σ) → Set
   Sp = ⊧Sp _⊧_▸_⊢
 
-  data _⊧_▸_⊢ {n} (Σ : Signature) (Ψ : MCtx n) (Γ : TCtx) : Set where
+  data _⊧_▸_⊢ {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
     ` : TVar Γ → Σ ⊧ Ψ ▸ Γ ⊢
     #_ : MVar Σ Ψ Γ → Σ ⊧ Ψ ▸ Γ ⊢
     _·_ : ∀ (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢
@@ -97,7 +97,7 @@ module Examples where
     data T : Set where
       lm ap : T
 
-    Σ : Signature
+    Σ : Sign
     Σ = record
       { 𝒪 = T
       ; 𝔄 = λ
