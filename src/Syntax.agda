@@ -74,7 +74,7 @@ Op Σ = 𝒪 Σ
   → (Γ : TCtx)
   → (𝔣 : Op Σ)
   → Set
-⊧Sp ϕ Σ Ψ Γ 𝔣 = (i : Fin (fst (𝔄 Σ 𝔣))) → ϕ Σ Ψ (Γ + nth (snd (𝔄 Σ 𝔣)) i)
+⊧Sp ϕ Σ Ψ Γ 𝔣 = ∀ i → ϕ Σ Ψ (Γ + nth (snd (𝔄 Σ 𝔣)) i)
 
 mutual
   record MVar {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
@@ -90,7 +90,7 @@ mutual
   data _⊧_▸_⊢ {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
     ` : TVar Γ → Σ ⊧ Ψ ▸ Γ ⊢
     #_ : MVar Σ Ψ Γ → Σ ⊧ Ψ ▸ Γ ⊢
-    _·_ : ∀ (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢
+    _·_ : (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢
 
 module Examples where
   module Λ where
