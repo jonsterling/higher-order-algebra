@@ -1,14 +1,17 @@
 module SyntaxTyped where
 
+infix 1 `_
 infix 2 #_
 infix 3 _⟨_⊣_⟩
+infix 3 _⟨_⟩
+infix 4 s_
+infixl 1 _*_
+infixl 1 _·_
 infixr 0 ,_
 infixr 0 _,_
-infixr 2 _∷_
 infixr 0 _⧺_
 infixr 1 _+_
-infix 4 s_
-infixl 1 _·_
+infixr 2 _∷_
 
 open import Agda.Primitive
 
@@ -119,9 +122,12 @@ mutual
        λ ts → tab (λ j → fst (ts j)) ≡ mapToList snd (fst (snd (𝔄 Σ 𝔣)))
 
   data _⊧_▸_⊢_ {n} (Σ : Sign) (Ψ : MCtx Σ n) (Γ : TCtx Σ) : 𝒯 Σ → Set where
-    ` : ∀ {τ} → TVar Σ Γ τ → Σ ⊧ Ψ ▸ Γ ⊢ τ
+    `_ : ∀ {τ} → TVar Σ Γ τ → Σ ⊧ Ψ ▸ Γ ⊢ τ
     #_ : (μ : MVar Σ Ψ Γ) → Σ ⊧ Ψ ▸ Γ ⊢ snd (nth Ψ (MVar.idx μ))
-    _·_ : (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢ cod Σ 𝔣
+    _*_ : (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢ cod Σ 𝔣
+
+pattern _·_ 𝔣 ts = 𝔣 * (ts , refl)
+pattern _⟨_⟩ μ ts = μ ⟨ ts ⊣ refl ⟩
 
 module Examples where
   module Λ where
@@ -145,15 +151,15 @@ module Examples where
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
     test₀ : ∀ {σ τ} → Σ σ τ ⊧ ((σ ∷ []) , τ) ∷ ([] , σ) ∷ [] ▸ [] ⊢ τ
-    test₀ = ap · ((λ
-      { z → _ , lm · ((λ
-        { z → , # z ⟨ (, ` z) ∷ [] ⊣ refl ⟩
+    test₀ = ap · λ
+      { z → _ , lm · λ
+        { z → , # z ⟨ (, ` z) ∷ [] ⟩
         ; (s ())
-        }) , refl)
-      ; (s z) → , # s z ⟨ [] ⊣ refl ⟩
+        }
+      ; (s z) → , # s z ⟨ [] ⟩
       ; (s (s ()))
-      }) , refl)
+      }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
     test₁ : ∀ {σ τ} → Σ σ τ ⊧ ((σ ∷ []) , τ) ∷ ([] , σ) ∷ [] ▸ [] ⊢ τ
-    test₁ = # z ⟨ (, # s z ⟨ [] ⊣ refl ⟩) ∷ [] ⊣ refl ⟩
+    test₁ = # z ⟨ (, # s z ⟨ [] ⟩) ∷ [] ⟩
