@@ -637,3 +637,54 @@ module Cats where
     ; ⊸¿ = record { com = T.¿ T.tt }
     ; ⊸idn = record { dicom = T.! T.id }
     }
+
+  _↓! : ∀ {o₀ o₁ h₀ h₁ s}
+    → {I : Category o₀ h₀}
+    → {J : Category o₁ h₁}
+    → I ⇒₀ J
+    → (I ⇏₀𝒸 Set𝒸 s) ⇒₀ (J ⇏₀𝒸 Set𝒸 _)
+  _↓! {I = I} {J = J} f = record
+    { map₀ = λ ϕ → record
+      { map₀ = λ 𝔧 → Σ[ 𝔦 ∶ obj (Op I) ] (hom (Op J) (map₀ f 𝔦) 𝔧 × map₀ ϕ 𝔦)
+      ; map₁ = λ { ρ (𝔦 , mf , ϕ𝔦) → 𝔦 , cmp (Op J) ρ mf , ϕ𝔦 }
+      }
+    ; map₁ = λ mf₀ → record { com = λ { (𝔦 , mf₁ , ϕ) → 𝔦 , mf₁ , com mf₀ ϕ } }
+    } where open Types
+
+  _↑* : ∀ {o₀ o₁ h₀ h₁ s}
+    → {I : Category o₀ h₀}
+    → {J : Category o₁ h₁}
+    → Op J ⇒₀ Op I
+    → (I ⇏₀𝒸 Set𝒸 s) ⇒₀ (J ⇏₀𝒸 Set𝒸 _)
+  _↑* {I = I} {J = J} f = record
+    { map₀ = _⋘⇒₀ f
+    ; map₁ = λ mf → record { com = com mf }
+    }
+
+  _↓* : ∀ {o₀ o₁ h₀ h₁ s}
+    → {I : Category o₀ h₀}
+    → {J : Category o₁ h₁}
+    → I ⇒₀ J
+    → (I ⇏₀𝒸 Set𝒸 s) ⇒₀ (J ⇏₀𝒸 Set𝒸 _)
+  _↓* {I = I} {J = J} f = record
+    { map₀ = λ ϕ → record
+      { map₀ = λ 𝔧 → Π[ 𝔦 ∶ obj (Op I) ] (hom (Op J) 𝔧 (map₀ f 𝔦) → map₀ ϕ 𝔦)
+      ; map₁ = λ ρ κ 𝔦 mf → κ 𝔦 (cmp (Op J) mf ρ)
+      }
+    ; map₁ = λ mf₀ → record { com = λ κ 𝔦 ϕ → com mf₀ (κ 𝔦 ϕ) }
+    } where open Types
+
+  ⨕ : ∀ {o h s}
+    → {𝒞 : Category o h}
+    → (ϕ : 𝒞 ⇏₀ Set𝒸 s)
+    → Category _ _
+  ⨕ ϕ = Op (! {𝒞₁ = Set𝒸 lzero} (Types.⊤ _) ⇊ ϕ)
+
+  π : ∀ {o h s}
+    → {𝒞 : Category o h}
+    → (ϕ : 𝒞 ⇏₀ Set𝒸 s)
+    → ⨕ ϕ ⇒₀ 𝒞
+  π = λ ϕ → record
+    { map₀ = T.fst T.⋘ T.snd
+    ; map₁ = T.snd
+    }
