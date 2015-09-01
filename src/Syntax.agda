@@ -1,105 +1,80 @@
 module Syntax where
 
-infix 2 #_
-infix 3 _⟨_⟩
-infix 0 _⊧_▸_⊢
-infixr 0 ,_
-infixr 0 _,_
-infixr 1 _∷_
-infixr 1 _+_
-infix 4 s_
+infix 6 #_
 infixl 0 _·_
+infixr 1 _+_
+infixr 5 _∷_
 
 open import Agda.Primitive
-
-record ∐ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
-  constructor _,_
-  field
-    fst : A
-    snd : B fst
-open ∐ public
-
-syntax ∐ A (λ x → B) = ∐[ x ∶ A ] B
-
-,_ : ∀ {a b} {A : Set a} {B : A → Set b} {x} → B x → ∐ A B
-, y = _ , y
-
-_×_ : ∀ {a b} → (A : Set a) (B : Set b) → Set (a ⊔ b)
-A × B = ∐ A λ _ → B
-
-data Nat : Set where
-  z : Nat
-  s_ : Nat → Nat
-{-# BUILTIN NATURAL Nat #-}
+open import Prelude
+  hiding (δ; _+_)
 
 _+_ : Nat → Nat → Nat
-z + n = n
-(s m) + n = s (m + n)
+m + z = m
+m + (s n) = s (m + n)
 
-data Fin : Nat → Set where
-  z : ∀ {n} → Fin (s n)
-  s_ : ∀ {n} → Fin n → Fin (s n)
+δ : ∀ {n} → (Fin (s n) → Set) → (Fin n → Set)
+δ L i = L (s i)
+
+δ* : ∀ {n} k → (Fin (n + k) → Set) → (Fin n → Set)
+δ* z L i = L i
+δ* (s k) L i = δ* k (δ L) i
 
 data Vec {a} (A : Set a) : Nat → Set a where
   [] : Vec A z
   _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
 
-nth : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
-nth (x ∷ xs) z = x
-nth (x ∷ xs) (s i) = nth xs i
+idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
+idx (x ∷ xs) z = x
+idx (x ∷ xs) (s i) = idx xs i
 
 record Sign : Set₁ where
   field
     𝒪 : Set₀
     𝔄 : 𝒪 → ∐ Nat (Vec Nat)
-open Sign public
 
-TCtx : Set
-TCtx = Nat
+  arity : 𝒪 → Nat
+  arity 𝔣 = fst (𝔄 𝔣)
 
-TVar : TCtx → Set
-TVar = Fin
+  valence : (𝔣 : 𝒪) → Fin (arity 𝔣) → Nat
+  valence 𝔣 = idx (snd (𝔄 𝔣))
 
-MCtx : Nat → Set
-MCtx = Vec TCtx
+  TCtx : Set
+  TCtx = Nat
 
-Op : Sign → Set
-Op Σ = 𝒪 Σ
+  TVar : TCtx → Set
+  TVar = Fin
 
-⊧Sp
-  : (ϕ : ∀ {n} → Sign → MCtx n → TCtx → Set)
-  → ∀ {n}
-  → (Σ : Sign)
-  → (Ψ : MCtx n)
-  → (Γ : TCtx)
-  → (𝔣 : Op Σ)
-  → Set
-⊧Sp ϕ Σ Ψ Γ 𝔣 = ∀ i → ϕ Σ Ψ (Γ + nth (snd (𝔄 Σ 𝔣)) i)
+  MCtx : TCtx → Set
+  MCtx = Vec TCtx
 
-mutual
-  record MVar {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
-    inductive
+  infix 7 _⟨_⟩
+  record MVar {Δ : TCtx} (Ψ : MCtx Δ) (Γ : TCtx) (ϕ : TCtx → Set) : Set where
     constructor _⟨_⟩
     field
-      idx : Fin n
-      vec : Vec (Σ ⊧ Ψ ▸ Γ ⊢) (nth Ψ idx)
+      var : TVar Δ
+      vec : Vec (ϕ Γ) (idx Ψ var)
+  open MVar public
 
-  Sp : ∀ {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) (𝔣 : Op Σ) → Set
-  Sp = ⊧Sp _⊧_▸_⊢
+  ⟦_⊢_⟧_ : (TCtx → Set) → (TCtx → Set)
+  ⟦_⊢_⟧_ ϕ Γ = ∐[ 𝔣 ∶ 𝒪 ] Π[ i ∶ Fin (arity 𝔣) ] ϕ (Γ + valence 𝔣 i)
+open Sign public
 
-  data _⊧_▸_⊢ {n} (Σ : Sign) (Ψ : MCtx n) (Γ : TCtx) : Set where
-    ` : TVar Γ → Σ ⊧ Ψ ▸ Γ ⊢
-    #_ : MVar Σ Ψ Γ → Σ ⊧ Ψ ▸ Γ ⊢
-    _·_ : (𝔣 : Op Σ) → Sp Σ Ψ Γ 𝔣 → Σ ⊧ Ψ ▸ Γ ⊢
+data Tm (Σ : Sign) {Δ : TCtx Σ} (Ψ : MCtx Σ Δ) (Γ : TCtx Σ) : Set where
+  ` : TVar Σ Γ → Tm Σ Ψ Γ
+  #_ : MVar Σ Ψ Γ (Tm Σ Ψ) → Tm Σ Ψ Γ
+  op : ⟦ Σ ⊢ Tm Σ Ψ ⟧ Γ → Tm Σ Ψ Γ
+
+pattern _·_ 𝔣 xs = op (𝔣 , xs)
 
 module Examples where
   module Λ where
-    data T : Set where
-      lm ap : T
+    data Op : Set where
+      lm ap : Op
 
     Σ : Sign
     Σ = record
-      { 𝒪 = T
+      { 𝒪 = Op
       ; 𝔄 = λ
         { lm → , 1 ∷ []
         ; ap → , 0 ∷ 0 ∷ []
@@ -107,16 +82,16 @@ module Examples where
       }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
-    test₀ : Σ ⊧ 1 ∷ 0 ∷ [] ▸ z ⊢
+    test₀ : Tm Σ (1 ∷ 0 ∷ []) z
     test₀ = ap · λ
       { z → lm · λ
         { z → # z ⟨ ` z ∷ [] ⟩
         ; (s ())
         }
       ; (s z) → # s z ⟨ [] ⟩
-      ; (s s ())
+      ; (s (s ()))
       }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
-    test₁ : Σ ⊧ 1 ∷ 0 ∷ [] ▸ z ⊢
+    test₁ : Tm Σ (1 ∷ 0 ∷ []) z
     test₁ = # z ⟨ # s z ⟨ [] ⟩ ∷ [] ⟩

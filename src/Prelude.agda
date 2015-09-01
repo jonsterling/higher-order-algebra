@@ -9,7 +9,7 @@ open import Agda.Primitive
 infixl 0 _←_
 infix  0 _~>_
 infix  0 _<~_
-infix  0 Π
+infix  2 Π
 infixr 3 _⋘_
 infixl 2 _⋙_
 infixl 5 _↑*
@@ -19,7 +19,7 @@ infixl 0 _≫·_
 infix  4 ¬_
 infix  0 !
 infix  0 ¿
-infix  2 Σ
+infix  2 ∐
 infixr 4 _,_
 infix  4 ,_
 infixr 1 _×_
@@ -150,26 +150,26 @@ pick : ∀ {a} b {P : Bool {b} → Set a} → P false → P true → (∀ x → 
 pick _ x y false = x
 pick _ x y true  = y
 
-record Σ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
+record ∐ {a b} (A : Set a) (B : A → Set b) : Set (a ⊔ b) where
   constructor _,_
   field
     fst : A
     snd : B fst
-open Σ public
+open ∐ public
 
-syntax Σ A (λ x → B) = Σ[ x ∶ A ] B
+syntax ∐ A (λ x → B) = ∐[ x ∶ A ] B
 
-,_ : ∀ {a b} {A : Set a} {B : A → Set b} {x} → B x → Σ A B
+,_ : ∀ {a b} {A : Set a} {B : A → Set b} {x} → B x → ∐ A B
 , y = _ , y
 
+_×_ : ∀ {a b} → (A : Set a) (B : Set b) → Set (a ⊔ b)
+A × B = ∐ A λ _ → B
+
 ᵛ : ∀ {a b c}
-  → {A : Set a} {B : A → Set b} {P : Σ A B → Set c}
+  → {A : Set a} {B : A → Set b} {P : ∐ A B → Set c}
   → Π[ x ∶ A ] Π[ y ∶ B x ] P (x , y)
   → (∀ x → P x)
 ᵛ p (x , y) = p x y
-
-_×_ : ∀ {a b} → (A : Set a) (B : Set b) → Set (a ⊔ b)
-A × B = Σ A ·≪ ! B
 
 δ : ∀ {a} {A : Set a} → A → A × A
 δ x = (x , x)
@@ -177,31 +177,31 @@ A × B = Σ A ·≪ ! B
 ⟨_,_⟩ : ∀ {a b x} {X : Set x} {A : X → Set a} {B : ∀ {x} → A x → Set b}
   → (f : Π X A)
   → Π X (B ⋘ f)
-  → Π X (Σ ⋘ A ⋙ ¿ B)
+  → Π X (∐ ⋘ A ⋙ ¿ B)
 ⟨ f , g ⟩ x = f x , g x
 
 ⟨_×_⟩ : ∀ {a b x₀ x₁} {A : Set a} {B : A → Set b} {X₀ : Set x₀} {X₁ : X₀ → Set x₁}
   → (f : X₀ → A)
   → X₁ ~> (B ⋘ f)
-  → (Σ X₀ X₁ → Σ A B)
+  → (∐ X₀ X₁ → ∐ A B)
 ⟨_×_⟩ f g (x , y) = f x , g y
 
 ↓× : ∀ {a b c} {A : Set a} {B : A → Set b} {C : Set (lsuc c)}
-  → Π A ·≪ B ⋙ Yo C → (Σ A B → C)
+  → Π A ·≪ B ⋙ Yo C → (∐ A B → C)
 ↓× f (x , y) = f x y
 
 ↑⇒ : ∀ {a b c} {A : Set a} {B : A → Set b} {C : Set (lsuc c)}
-  → (Σ A B → C) → Π A ·≪ B ⋙ Yo C
+  → (∐ A B → C) → Π A ·≪ B ⋙ Yo C
 ↑⇒ f x y = f (x , y)
 
 _+_ : ∀ {i} → (A : Set i) (B : Set i) → Set i
-A + B = Σ Bool ·≪ pick lzero A B
+A + B = ∐ Bool ·≪ pick lzero A B
 
 pattern inl a = false , a
 pattern inr b = true  , b
 
 _-_ : (X : Set₀) (x : X) → Set₀
-X - x = Σ[ y ∶ X ] ¬ (x ≡ y)
+X - x = ∐[ y ∶ X ] ¬ (x ≡ y)
 
 Dec : ∀ (A : Set₀) → Set₀
 Dec A = ¬ A + A
@@ -214,13 +214,17 @@ Dec A = ¬ A + A
 [ f , g ] (inr b) = g b
 
 data Nat : Set₀ where
-  ze : Nat
-  su : (n : Nat) → Nat
+  z : Nat
+  s : (n : Nat) → Nat
 {-# BUILTIN NATURAL Nat #-}
 
 data Fin : Nat → Set₀ where
-  ze : ∀ {m} → Fin (su m)
-  su : ∀ {m} → (i : Fin m) → Fin (su m)
+  z : ∀ {m} → Fin (s m)
+  s : ∀ {m} → (i : Fin m) → Fin (s m)
+
+toNat : ∀ {n} → Fin n → Nat
+toNat z = z
+toNat (s i) = s (toNat i)
 
 ∫↓ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
 ∫↓ {X = X} P = ∀ {x} → P x
@@ -228,7 +232,7 @@ data Fin : Nat → Set₀ where
 syntax ∫↓ {X = X} (λ x → P) = ∫↓[ x ∶ X ] P
 
 ∫↑ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
-∫↑ {X = X} P = Σ[ x ∶ X ] P x
+∫↑ {X = X} P = ∐[ x ∶ X ] P x
 
 syntax ∫↑ {X = X} (λ x → P) = ∫↑[ x ∶ X ] P
 
