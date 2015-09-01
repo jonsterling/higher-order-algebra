@@ -53,10 +53,10 @@ record Sign : Set₁ where
   ⟦_⊢_⟧_ ϕ Γ = ∐[ 𝔣 ∶ 𝒪 ] Π[ i ∶ Fin (arity 𝔣) ] ϕ (Γ + valence 𝔣 i)
 open Sign public
 
-data Tm (Σ : Sign) {Δ : TCtx Σ} (Ψ : MCtx Σ Δ) (Γ : TCtx Σ) : Set where
-  ` : TVar Σ Γ → Tm Σ Ψ Γ
-  #_ : MVar Σ Ψ Γ (Tm Σ Ψ) → Tm Σ Ψ Γ
-  op : ⟦ Σ ⊢ Tm Σ Ψ ⟧ Γ → Tm Σ Ψ Γ
+data _* (Σ : Sign) {Δ : TCtx Σ} (Ψ : MCtx Σ Δ) (Γ : TCtx Σ) : Set where
+  ` : TVar Σ Γ → (Σ *) Ψ Γ
+  #_ : MVar Σ Ψ Γ ((Σ *) Ψ) → (Σ *) Ψ Γ
+  op : ⟦ Σ ⊢ (Σ *) Ψ ⟧ Γ → (Σ *) Ψ Γ
 
 pattern _·_ 𝔣 xs = op (𝔣 , xs)
 
@@ -75,7 +75,7 @@ module Examples where
       }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
-    test₀ : Tm Σ (1 ∷ 0 ∷ []) z
+    test₀ : (Σ *) (1 ∷ 0 ∷ []) z
     test₀ = ap · λ
       { z → lm · λ
         { z → # z ⟨ ` z ∷ [] ⟩
@@ -86,5 +86,5 @@ module Examples where
       }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
-    test₁ : Tm Σ (1 ∷ 0 ∷ []) z
+    test₁ : (Σ *) (1 ∷ 0 ∷ []) z
     test₁ = # z ⟨ # s z ⟨ [] ⟩ ∷ [] ⟩
