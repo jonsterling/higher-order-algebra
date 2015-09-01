@@ -16,7 +16,7 @@ data 𝔘 : Set₀ where
 
 Ix : 𝔘 → ∀ {i} x → Set i → Set (i ⊔ lsuc x)
 Ix 𝔓 x I = I → Set x
-Ix 𝔉 x I = Σ[ X ∶ Set x ] (X → I)
+Ix 𝔉 x I = ∐[ X ∶ Set x ] (X → I)
 
 _[_]→_ : ∀ {i} → Set i → 𝔘 → Set i → Set (lsuc i)
 _[_]→_ {i = i} I 𝔓 O = Ix 𝔓 i I → Ix 𝔓 i O
@@ -38,10 +38,10 @@ map : ∀ {e i} {I : Set i} (p : Ix 𝔉 e I) → (dom p → I)
 map = snd
 
 inv : ∀ {e i} {I : Set i} {E : Set e} → (E → I) → Ix 𝔓 (i ⊔ e) I
-inv {E = E} p i = Σ[ e ∶ E ] i ≡ p e
+inv {E = E} p i = ∐[ e ∶ E ] i ≡ p e
 
 tot : ∀ {i p} {I : Set i} → Ix 𝔓 (i ⊔ p) (Ix 𝔓 p I)
-tot = Σ _
+tot = ∐ _
 
 fib : ∀ {i p} {I : Set i} → (φ : Ix 𝔓 p I) → (tot φ → I)
 fib φ = fst

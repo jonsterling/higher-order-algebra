@@ -13,13 +13,6 @@ _+_ : Nat → Nat → Nat
 m + z = m
 m + (s n) = s (m + n)
 
-δ : ∀ {n} → (Fin (s n) → Set) → (Fin n → Set)
-δ L i = L (s i)
-
-δ* : ∀ {n} k → (Fin (n + k) → Set) → (Fin n → Set)
-δ* z L i = L i
-δ* (s k) L i = δ* k (δ L) i
-
 data Vec {a} (A : Set a) : Nat → Set a where
   [] : Vec A z
   _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
