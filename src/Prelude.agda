@@ -6,31 +6,32 @@ open import Agda.Primitive
 -- Preliminaries
 --------------------------------------------------------------------------------
 
-infixl 0 _←_
-infix  0 _~>_
+infix  0 !
+infix  0 [_,_]
 infix  0 _<~_
+infix  0 _~>_
+infix  0 ¿
+infix  0 ∫↑
+infix  0 ∫↓
+infix  0 ⟨_,_⟩
+infix  0 ⟨_×_⟩
 infix  2 Π
-infixr 3 _⋘_
+infix  2 ∐
+infix  3 _≡_
+infix  4 ,_
+infix  4 ¬_
+infixl 0 _←_
+infixl 0 _≫·_
 infixl 2 _⋙_
 infixl 5 _↑*
 infixl 5 _↑*·_
 infixr 0 _·≪_
-infixl 0 _≫·_
-infix  4 ¬_
-infix  0 !
-infix  0 ¿
-infix  2 ∐
-infixr 4 _,_
-infix  4 ,_
-infixr 1 _×_
-infix  0 ⟨_,_⟩
-infix  0 ⟨_×_⟩
 infixr 1 _+_
 infixr 1 _-_
-infix  0 [_,_]
-infix  3 _≡_
-infix  0 ∫↓
-infix  0 ∫↑
+infixr 1 _×_
+infixr 3 _⋘_
+infixr 4 _,_
+infixr 5 _∷_
 
 _←_ : ∀ {a b} → Set a → Set b → Set (a ⊔ b)
 B ← A = A → B
@@ -222,9 +223,17 @@ data Fin : Nat → Set₀ where
   z : ∀ {m} → Fin (s m)
   s : ∀ {m} → (i : Fin m) → Fin (s m)
 
-toNat : ∀ {n} → Fin n → Nat
-toNat z = z
-toNat (s i) = s (toNat i)
+data Vec {a} (A : Set a) : Nat → Set a where
+  [] : Vec A z
+  _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
+
+map : ∀ {a} {A : Set a} {B : Set} {n} (f : A → B) → (Vec A n → Vec B n)
+map f [] = []
+map f (x ∷ xs) = f x ∷ map f xs
+
+idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
+idx (x ∷ xs) z = x
+idx (x ∷ xs) (s i) = idx xs i
 
 ∫↓ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
 ∫↓ {X = X} P = ∀ {x} → P x

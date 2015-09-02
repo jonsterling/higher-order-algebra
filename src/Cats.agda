@@ -157,7 +157,7 @@ module Cats where
       hom : (𝔞 : obj) → (𝔟 : obj) → Set h
       idn : ∀ {𝔞} → hom 𝔞 𝔞
       cmp : ∀ {𝔞 𝔟 𝔠} (g : hom 𝔟 𝔠) (f : hom 𝔞 𝔟) → hom 𝔞 𝔠
-  open Category
+  open Category public
 
   ⊤𝒸 : ∀ o h → Category _ _
   ⊤𝒸 o h = record
@@ -192,7 +192,7 @@ module Cats where
       field
         map₀ : (𝔞 : obj 𝒞) → obj 𝒟
         map₁ : ∀ {𝔠₀ 𝔠₁} → (f : hom 𝒞 𝔠₀ 𝔠₁) → hom 𝒟 (map₀ 𝔠₀) (map₀ 𝔠₁)
-  open _⇒₀_
+  open _⇒₀_ public
 
   _⇏₀_ : ∀ {o₀ h₀} {o₁ h₁}
     → (𝒞 : Category o₀ h₀)
@@ -213,7 +213,7 @@ module Cats where
           → (f : hom 𝒞₀ 𝔠₀₀ 𝔠₀₁)
           → (g : hom 𝒞₁ 𝔠₁₀ 𝔠₁₁)
           → hom 𝒟 (bimap₀ 𝔠₀₀ 𝔠₁₀) (bimap₀ 𝔠₀₁ 𝔠₁₁)
-  open :[_,_]⇒₀_
+  open :[_,_]⇒₀_ public
 
   _:[_]⇏₀_ : ∀ {o₀ h₀} {o₁ h₁} {o₂ h₂}
     → (𝒞₀ : Category o₀ h₀)
@@ -231,7 +231,7 @@ module Cats where
     where
       field
         com : ∀ {𝔠} → hom 𝒟 (map₀ F 𝔠) (map₀ G 𝔠)
-  open _⇒₁_
+  open _⇒₁_ public
 
   record _:⇒₁_
     {o₀ h₀} {o₁ h₁}
@@ -242,7 +242,7 @@ module Cats where
     where
       field
         bicom : ∀ {𝔠} → hom 𝒟 (bimap₀ F 𝔠 𝔠) (bimap₀ G 𝔠 𝔠)
-  open _:⇒₁_
+  open _:⇒₁_ public
 
   record _:⇏₁_
     {o₀ h₀} {o₁ h₁}
@@ -253,7 +253,7 @@ module Cats where
     where
       field
         dicom : ∀ {𝔠} → hom 𝒱 (bimap₀ F 𝔠 𝔠) (bimap₀ G 𝔠 𝔠)
-  open _:⇏₁_
+  open _:⇏₁_ public
 
   id⇒₀ : ∀ {o h} (𝒞 : Category o h) → 𝒞 ⇒₀ 𝒞
   id⇒₀ 𝒞 = record
@@ -698,6 +698,7 @@ module Cats where
       G : obj 𝒞 → obj 𝒟
       ret : ∀ {𝔞} → hom 𝒟 (map₀ J 𝔞) (G 𝔞)
       ext : ∀ {𝔞 𝔟} → hom 𝒟 (map₀ J 𝔞) (G 𝔟) → hom 𝒟 (G 𝔞) (G 𝔟)
+  open RMonad
 
   Monad : ∀ {o h} (𝒞 : Category o h) → Set _
   Monad 𝒞 = RMonad (id⇒₀ 𝒞)

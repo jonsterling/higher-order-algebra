@@ -4,11 +4,14 @@ infix 0 ⌞_⌟
 infix 6 #_
 infixl 0 _·_
 infixr 1 _+_
-infixr 5 _∷_
 infixr 1 _=≪_
 infixl 1 _≫=_
+infix 0 ⟦_⊧_⟧₀
 
 open import Agda.Primitive
+import Cats
+open Cats.Cats
+  hiding (Op)
 open import Prelude
   hiding (δ; _+_)
 
@@ -16,23 +19,47 @@ _+_ : Nat → Nat → Nat
 m + z = m
 m + (s n) = s (m + n)
 
-data Vec {a} (A : Set a) : Nat → Set a where
-  [] : Vec A z
-  _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
+PSh : ∀ {o h} → Category o h → Set _
+PSh 𝒞 = 𝒞 ⇒₀ Set𝒸 lzero
 
-map : ∀ {a} {A : Set a} {B : Set} {n} (f : A → B) → (Vec A n → Vec B n)
-map f [] = []
-map f (x ∷ xs) = f x ∷ map f xs
-
-idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
-idx (x ∷ xs) z = x
-idx (x ∷ xs) (s i) = idx xs i
+PSh𝒸 : ∀ {o h} → Category o h → Category _ _
+PSh𝒸 𝒞 = 𝒞 ⇒₀𝒸 Set𝒸 lzero
 
 TCtx : Set
 TCtx = Nat
 
 TVar : TCtx → Set
 TVar = Fin
+
+TVar𝒸 : Category _ _
+TVar𝒸 = record
+  { obj = Nat
+  ; hom = λ m n → TVar m → TVar n
+  ; idn = λ i → i
+  ; cmp = λ g f i → g (f i)
+  }
+
+TVar⇒₀ : TVar𝒸 ⇒₀ Set𝒸 _
+TVar⇒₀ = record
+  { map₀ = TVar
+  ; map₁ = id
+  }
+
+wkr : ∀ {Γ Δ} k
+  → (ρ : TVar Γ → TVar Δ)
+  → (TVar (Γ + k) → TVar (Δ + k))
+wkr z ρ i = ρ i
+wkr (s k) ρ z = z
+wkr (s k) ρ (s i) = s (wkr k ρ i)
+
+δ* : Nat → PSh𝒸 TVar𝒸 ⇒₀ PSh𝒸 TVar𝒸
+δ* k = record
+  { map₀ = λ ϕ → record
+    { map₀ = λ i → map₀ ϕ (i + k)
+    ; map₁ = λ ρ → map₁ ϕ (wkr k ρ)
+    }
+  ; map₁ = λ α → record { com = com α }
+  }
 
 record Sign : Set₁ where
   field
@@ -55,35 +82,34 @@ record Sign : Set₁ where
       var : TVar Θ
       vec : Vec (ϕ Γ) (idx Ψ var)
   open MVar public
-
-  ⟦_⊢_⟧_ : (TCtx → Set) → (TCtx → Set)
-  ⟦_⊢_⟧_ ϕ Γ = ∐[ 𝔣 ∶ 𝒪 ] Π[ i ∶ TVar (arity 𝔣) ] ϕ (Γ + valence 𝔣 i)
 open Sign public
+
+⟦_⊧_⟧₀ : (Σ : Sign) (ϕ : TCtx → Set) (Γ : TCtx) → Set
+⟦ Σ ⊧ ϕ ⟧₀ Γ = ∐[ 𝔣 ∶ 𝒪 Σ ] Π[ i ∶ TVar (arity Σ 𝔣) ] ϕ (Γ + valence Σ 𝔣 i)
+
+⟦_⊧_⟧₁
+  : (Σ : Sign)
+  → (ϕ : PSh TVar𝒸)
+  → {Γ Δ : TCtx} (ρ : TVar Γ → TVar Δ)
+  → ⟦ Σ ⊧ map₀ ϕ ⟧₀ Γ
+  → ⟦ Σ ⊧ map₀ ϕ ⟧₀ Δ
+⟦ Σ ⊧ ϕ ⟧₁ ρ (𝔣 , κ) = 𝔣 , λ i → map₁ ϕ (wkr (valence Σ 𝔣 i) ρ) (κ i)
+
+⟦_⟧ : Sign → PSh𝒸 TVar𝒸 ⇒₀ PSh𝒸 TVar𝒸
+⟦_⟧ Σ = record
+  { map₀ = λ ϕ → record
+    { map₀ = ⟦ Σ ⊧ map₀ ϕ ⟧₀
+    ; map₁ = ⟦ Σ ⊧ ϕ ⟧₁
+    }
+  ; map₁ = λ f → record { com = λ { (𝔣 , κ) → (𝔣 , λ i → com f (κ i)) } }
+  }
 
 data _* (Σ : Sign) {Θ : TCtx} (Ψ : MCtx Σ Θ) (Γ : TCtx) : Set where
   ⌞_⌟ : TVar Γ → (Σ *) Ψ Γ
   #_ : MVar Σ Ψ Γ ((Σ *) Ψ) → (Σ *) Ψ Γ
-  op : ⟦ Σ ⊢ (Σ *) Ψ ⟧ Γ → (Σ *) Ψ Γ
+  op : ⟦ Σ ⊧ (Σ *) Ψ ⟧₀ Γ → (Σ *) Ψ Γ
 
 pattern _·_ 𝔣 xs = op (𝔣 , xs)
-
-SignAlg : (Σ : Sign) → Set₁
-SignAlg Σ =
-  ∐ (TCtx → Set₀) λ ϕ →
-  Π TCtx λ Γ →
-  Π (𝒪 Σ) λ 𝔣 →
-  Π (TVar (arity Σ 𝔣)) (λ i → ϕ (Γ + valence Σ 𝔣 i)) →
-  ϕ Γ
-
-alg : (Σ : Sign) {Θ : TCtx} (Ψ : MCtx Σ Θ) → SignAlg Σ
-alg Σ Ψ = (Σ *) Ψ , λ Γ 𝔣 α → op (𝔣 , α)
-
-wkr : ∀ {Γ Δ} k
-  → (ρ : TVar Γ → TVar Δ)
-  → (TVar (Γ + k) → TVar (Δ + k))
-wkr z ρ i = ρ i
-wkr (s k) ρ z = z
-wkr (s k) ρ (s i) = s (wkr k ρ i)
 
 {-# TERMINATING #-}
 ren
@@ -110,14 +136,21 @@ sub σ ⌞ i ⌟ = σ i
 sub σ (# μ) = # var μ ⟨ map (sub σ) (vec μ) ⟩ -- need sized types?
 sub {Σ = Σ} σ (op (𝔣 , xs)) = op (𝔣 , λ i → sub (wks (valence Σ 𝔣 i) σ) (xs i))
 
+Σ*-monad : (Σ : Sign) {Θ : TCtx} (Ψ : MCtx Σ Θ) → RMonad TVar⇒₀
+Σ*-monad Σ Ψ = record
+  { G = (Σ *) Ψ
+  ; ret = ⌞_⌟
+  ; ext = sub
+  }
+
 ret : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ}
   → TVar Γ → (Σ *) Ψ Γ
-ret = ⌞_⌟
+ret {Σ = Σ} {Ψ = Ψ} = RMonad.ret (Σ*-monad Σ Ψ)
 
 _=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
   → (TVar Γ → (Σ *) Ψ Δ)
   → ((Σ *) Ψ Γ → (Σ *) Ψ Δ)
-_=≪_ = sub
+_=≪_ {Σ = Σ} {Ψ = Ψ} = RMonad.ext (Σ*-monad Σ Ψ)
 
 _≫=_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
   → (Σ *) Ψ Γ
