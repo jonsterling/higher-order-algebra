@@ -5,7 +5,8 @@ infix 6 #_
 infixl 0 _·_
 infixr 1 _+_
 infixr 5 _∷_
--- infixr 1 _=≪_
+infixr 1 _=≪_
+infixl 1 _≫=_
 
 open import Agda.Primitive
 open import Prelude
@@ -117,9 +118,15 @@ ret : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ}
 ret = ⌞_⌟
 
 _=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
-  → (ρ : TVar Γ → (Σ *) Ψ Δ)
+  → (TVar Γ → (Σ *) Ψ Δ)
   → ((Σ *) Ψ Γ → (Σ *) Ψ Δ)
 _=≪_ = sub
+
+_≫=_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
+  → (Σ *) Ψ Γ
+  → (TVar Γ → (Σ *) Ψ Δ)
+  → (Σ *) Ψ Δ
+m ≫= σ = σ =≪ m
 
 module Examples where
   module Λ where
