@@ -80,8 +80,7 @@ alg Σ Ψ = (Σ *) Ψ , λ Γ 𝔣 α → op (𝔣 , α)
 
 wkr : ∀ {Γ Δ} k
   → (ρ : TVar Γ → TVar Δ)
-  → (TVar (Γ + k)
-  → TVar (Δ + k))
+  → (TVar (Γ + k) → TVar (Δ + k))
 wkr z ρ i = ρ i
 wkr (s k) ρ z = z
 wkr (s k) ρ (s i) = s (wkr k ρ i)
@@ -97,8 +96,7 @@ ren {Σ = Σ} ρ (op (𝔣 , xs)) = op (𝔣 , λ i → ren (wkr (valence Σ �
 
 wks : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ} k
   → (ρ : TVar Γ → (Σ *) Ψ Δ)
-  → (TVar (Γ + k)
-  → (Σ *) Ψ (Δ + k))
+  → (TVar (Γ + k) → (Σ *) Ψ (Δ + k))
 wks z σ i = σ i
 wks (s k) σ z = ⌞ z ⌟
 wks (s k) σ (s i) = ren s (wks k σ i)
@@ -113,8 +111,7 @@ sub σ (# μ) = # var μ ⟨ map (sub σ) (vec μ) ⟩ -- need sized types?
 sub {Σ = Σ} σ (op (𝔣 , xs)) = op (𝔣 , λ i → sub (wks (valence Σ 𝔣 i) σ) (xs i))
 
 ret : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ}
-  → TVar Γ
-  → (Σ *) Ψ Γ
+  → TVar Γ → (Σ *) Ψ Γ
 ret = ⌞_⌟
 
 _=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
