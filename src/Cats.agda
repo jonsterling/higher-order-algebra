@@ -688,3 +688,16 @@ module Cats where
     { map₀ = T.fst T.⋘ T.snd
     ; map₁ = T.snd
     }
+
+  record RMonad {o₀ o₁ h₀ h₁}
+    {𝒞 : Category o₀ h₀}
+    {𝒟 : Category o₁ h₁}
+    (J : 𝒞 ⇒₀ 𝒟)
+    : Set (o₀ ⊔ o₁ ⊔ h₁) where
+    field
+      G : obj 𝒞 → obj 𝒟
+      ret : ∀ {𝔞} → hom 𝒟 (map₀ J 𝔞) (G 𝔞)
+      ext : ∀ {𝔞 𝔟} → hom 𝒟 (map₀ J 𝔞) (G 𝔟) → hom 𝒟 (G 𝔞) (G 𝔟)
+
+  Monad : ∀ {o h} (𝒞 : Category o h) → Set _
+  Monad 𝒞 = RMonad (id⇒₀ 𝒞)
