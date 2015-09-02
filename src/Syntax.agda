@@ -111,6 +111,16 @@ sub σ ⌞ i ⌟ = σ i
 sub σ (# μ) = # var μ ⟨ map (sub σ) (vec μ) ⟩ -- need sized types?
 sub {Σ = Σ} σ (op (𝔣 , xs)) = op (𝔣 , λ i → sub (wks (valence Σ 𝔣 i) σ) (xs i))
 
+ret : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ}
+  → TVar Γ
+  → (Σ *) Ψ Γ
+ret = ⌞_⌟
+
+_=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
+  → (ρ : TVar Γ → (Σ *) Ψ Δ)
+  → ((Σ *) Ψ Γ → (Σ *) Ψ Δ)
+_=≪_ = sub
+
 module Examples where
   module Λ where
     data Op : Set where
