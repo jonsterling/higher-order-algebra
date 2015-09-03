@@ -7,7 +7,7 @@ open Cats.Cats
 open import Containers
 open import Prelude
 
-infixr 6 `_
+infixr 5 `_
 infix 0 [_]_
 infix 0 ⌞_⌟
 infix 0 ⟦_⊧_⟧₀
@@ -62,7 +62,7 @@ wkn : ∀ {𝔇 : TCtx → Set₀} Φ
   → [ TCtx ▹ TVar ] 𝔇 ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· 𝔇
 wkn ∅ `z `s i ρ = ρ i
 wkn (s Φ) `z `s z ρ = `z z
-wkn (s Φ) `z `s (s i) ρ = `s (wkn Φ `z `s i ρ) s
+wkn (s Φ) `z `s (s i) ρ = `s (wkn Φ `z `s i ρ) s_
 
 wkr : ∀ Φ → [ TCtx ▹ TVar ] TVar ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· TVar
 wkr Φ = wkn Φ id (λ x → ¿ x)
@@ -270,7 +270,7 @@ module Examples where
       { z → ƛ ` z
       ; (s z) → ƛ ` z
       ; (s (s z)) → ƛ ` z
-      ; (s (s (s z))) → ` s (s z)
+      ; (s (s (s z))) → ` s s z
       ; (s (s (s (s ()))))
       }
 
