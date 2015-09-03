@@ -257,15 +257,15 @@ module Examples where
       }
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
-    test₀ : (Σ *) TVar (1 ∷ 0 ∷ []) ∅
+    test₀ : Tm Σ (1 ∷ 0 ∷ []) ∅
     test₀ = (ƛ #₁ z [ ` z ]) ⊙ #₀ (s z)
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
-    test₁ : (Σ *) TVar (1 ∷ 0 ∷ []) ∅
+    test₁ : Tm Σ (1 ∷ 0 ∷ []) ∅
     test₁ = #₁ z [ #₀ (s z) ]
 
     --
-    test₂ : (Σ *) TVar [] ∅
+    test₂ : Tm Σ [] ∅
     test₂ = def 3 · λ
       { z → ƛ ` z
       ; (s z) → ƛ ` z
@@ -274,7 +274,7 @@ module Examples where
       ; (s (s (s (s ()))))
       }
 
-    test₃ : (Σ *) TVar [] ∅
+    test₃ : Tm Σ [] ∅
     test₃ = tel 3 · λ
       { z → ƛ ` z
       ; (s z) → ` z
