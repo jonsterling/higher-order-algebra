@@ -7,6 +7,7 @@ open Cats.Cats
 open import Containers
 open import Prelude
 
+infixr 0 `_
 infix 0 _[_]
 infix 0 ⌞_⌟
 infix 0 ⟦_⊧_⟧₀
@@ -110,6 +111,7 @@ data _* (Σ : Sign) (ϕ : TCtx → Set₀) {Ξ : TCtx} (Ψ : MCtx Σ Ξ) (Γ : T
 Tm : (Σ : Sign) {Ξ : TCtx} (Ψ : MCtx Σ Ξ) (Γ : TCtx) → Set
 Tm Σ = (Σ *) TVar
 
+pattern `_ i = ⌞ i ⌟
 pattern _·_ 𝔣 xs = op (𝔣 , xs)
 pattern _[_] e θ = ex (_ , e , θ)
 
