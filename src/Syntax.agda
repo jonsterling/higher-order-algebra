@@ -7,11 +7,13 @@ open Cats.Cats
 open import Containers
 open import Prelude
 
-infixr 0 `_
-infix 0 _[_]
+infixr 6 `_
+infix 0 [_]_
 infix 0 ⌞_⌟
 infix 0 ⟦_⊧_⟧₀
 infix 6 #_
+infix 6 #₀
+infix 6 #₁_[_]
 infixl 0 _·_
 infixl 1 _≫=_
 infixr 1 _=≪_
@@ -113,7 +115,9 @@ Tm Σ = (Σ *) TVar
 
 pattern `_ i = ⌞ i ⌟
 pattern _·_ 𝔣 xs = op (𝔣 , xs)
-pattern _[_] e θ = ex (_ , e , θ)
+pattern #₀ μ = # μ ⟨ [] ⟩
+pattern #₁_[_] μ e = # μ ⟨ e ∷ [] ⟩
+pattern [_]_ σ e = ex (_ , e , σ)
 
 {-# TERMINATING #-}
 cata
@@ -129,7 +133,7 @@ cata `va `me `op `ex `wkn ⌞ i ⌟ ρ =
   `va ·≪ ρ i
 cata `va `me `op `ex `wkn (# μ ⟨ xs ⟩) ρ =
   `me (μ ⟨ map (λ e → cata `va `me `op `ex `wkn e ρ) xs ⟩) -- need sized types?
-cata `va `me `op `ex `wkn (e [ σ ]) ρ =
+cata `va `me `op `ex `wkn ([ σ ] e) ρ =
   `ex ·≪ , e , λ i → cata `va `me `op `ex `wkn (σ i) ρ
 cata {Σ = Σ} `va `me `op `ex `wkn (op (𝔣 , κ)) ρ =
   `op ·≪ 𝔣 , λ i → cata `va `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
@@ -209,8 +213,22 @@ _∷ₑ_ fz fs (s m) = fs m
 
 module Examples where
   module Λ where
+    infixr 0 ƛ_
+    infixl 1 _⊙_
+
     data Op : Set where
-      lm ap : Op
+      lm : Op
+      ap : Op
+      def : TCtx → Op
+      tel : TCtx → Op
+
+    def-aux : (n : Nat) → Vec Nat n
+    def-aux z = []
+    def-aux (s n) = 0 ∷ def-aux n
+
+    tel-aux : (n : Nat) (cur : Nat) → Vec Nat n
+    tel-aux z cur = []
+    tel-aux (s n) cur = cur ∷ tel-aux n (s cur)
 
     Σ : Sign
     Σ = record
@@ -218,20 +236,47 @@ module Examples where
       ; 𝔄 = λ
         { lm → , 1 ∷ []
         ; ap → , 0 ∷ 0 ∷ []
+        ; (def Φ) → , def-aux Φ ++ Φ ∷ []
+        ; (tel Φ) → , tel-aux Φ z
         }
       }
 
-    -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
-    test₀ : (Σ *) TVar (1 ∷ 0 ∷ []) z
-    test₀ = ap · λ
-      { z → lm · λ
-        { z → # z ⟨ ⌞ z ⌟ ∷ [] ⟩
-        ; (s ())
-        }
-      ; (s z) → # s z ⟨ [] ⟩
+    ƛ_ : ∀ {Ξ Γ} {Ψ : MCtx Σ Ξ}
+      → Tm Σ Ψ (s Γ) → Tm Σ Ψ Γ
+    ƛ_ e = lm · λ
+      { z → e
+      ; (s ())
+      }
+
+    _⊙_ : ∀ {Ξ Γ} {Ψ : MCtx Σ Ξ}
+      → Tm Σ Ψ Γ → Tm Σ Ψ Γ → Tm Σ Ψ Γ
+    e₀ ⊙ e₁ = ap · λ
+      { z → e₀
+      ; (s z) → e₁
       ; (s (s ()))
       }
 
+    -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
+    test₀ : (Σ *) TVar (1 ∷ 0 ∷ []) ∅
+    test₀ = (ƛ #₁ z [ ` z ]) ⊙ #₀ (s z)
+
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
-    test₁ : (Σ *) TVar (1 ∷ 0 ∷ []) z
-    test₁ = # z ⟨ # s z ⟨ [] ⟩ ∷ [] ⟩
+    test₁ : (Σ *) TVar (1 ∷ 0 ∷ []) ∅
+    test₁ = #₁ z [ #₀ (s z) ]
+
+    --
+    test₂ : (Σ *) TVar [] ∅
+    test₂ = def 3 · λ
+      { z → ƛ ` z
+      ; (s z) → ƛ ` z
+      ; (s (s z)) → ƛ ` z
+      ; (s (s (s z))) → ` s (s z)
+      ; (s (s (s (s ()))))
+      }
+
+    test₃ : (Σ *) TVar [] ∅
+    test₃ = tel 3 · λ
+      { z → ƛ ` z
+      ; (s z) → ` z
+      ; (s (s z)) → ` s z
+      ; (s (s (s ()))) }
