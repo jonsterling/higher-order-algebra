@@ -44,12 +44,16 @@ _⧺_ : TCtx → TCtx → TCtx
 Γ ⧺ ∅ = Γ
 Γ ⧺ (s Δ) = s (Γ ⧺ Δ)
 
-wkr : ∀ {Γ Δ} Φ
-  → (ρ : TVar Γ → TVar Δ)
-  → (TVar (Γ ⧺ Φ) → TVar (Δ ⧺ Φ))
-wkr ∅ ρ i = ρ i
-wkr (s Φ) ρ ∅ = ∅
-wkr (s Φ) ρ (s i) = s (wkr Φ ρ i)
+wkn : ∀ {𝔇 : TCtx → Set₀} Φ
+  → TVar ~> 𝔇
+  → [ TCtx ▹ TVar ] TVar ⊧ 𝔇 ⇓ 𝔇
+  → [ TCtx ▹ TVar ] 𝔇 ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· 𝔇
+wkn ∅ `z `s i ρ = ρ i
+wkn (s Φ) `z `s z ρ = `z z
+wkn (s Φ) `z `s (s i) ρ = `s (wkn Φ `z `s i ρ) s
+
+wkr : ∀ Φ → [ TCtx ▹ TVar ] TVar ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· TVar
+wkr Φ = wkn Φ id (λ x → ¿ x)
 
 record Sign : Set₁ where
   field
@@ -86,7 +90,7 @@ open Sign public
   → (ρ : TVar Γ → TVar Δ)
   → ⟦ Σ ⊧ ϕ₀ ⟧₀ Γ
   → ⟦ Σ ⊧ ϕ₀ ⟧₀ Δ
-⟦ Σ ⊧ ϕ₁ ⟧₁ ρ (𝔣 , κ) = 𝔣 , λ i → ϕ₁ 𝔣 i (wkr (valence Σ 𝔣 i) ρ) (κ i)
+⟦ Σ ⊧ ϕ₁ ⟧₁ ρ (𝔣 , κ) = 𝔣 , λ i → ϕ₁ 𝔣 i (λ x → wkr (valence Σ 𝔣 i) x ρ) (κ i)
 
 data _* (Σ : Sign) (ϕ : TCtx → Set₀) {Ξ : TCtx} (Ψ : MCtx Σ Ξ) (Γ : TCtx) : Set₀ where
   ⌞_⌟ : ϕ Γ → (Σ *) ϕ Ψ Γ
@@ -116,20 +120,9 @@ cata `v `me `op `ex `wkn (e [ σ ]) ρ =
 cata {Σ = Σ} `v `me `op `ex `wkn (op (𝔣 , κ)) ρ =
   `op ·≪ 𝔣 , λ i → cata `v `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
 
-wkn : ∀ {𝔇 : TCtx → Set₀} Φ
-  → TVar ~> 𝔇
-  → [ TCtx ▹ TVar ] TVar ⊧ 𝔇 ⇓ 𝔇
-  → [ TCtx ▹ TVar ] 𝔇 ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· 𝔇
-wkn ∅ `z `s i ρ = ρ i
-wkn (s Φ) `z `s z ρ = `z z
-wkn (s Φ) `z `s (s i) ρ = `s (wkn Φ `z `s i ρ) s
-
-`wkr : ∀ Φ → [ TCtx ▹ TVar ] TVar ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· TVar
-`wkr Φ = wkn Φ id (λ x → ¿ x)
-
 ren : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ}
   → [ TCtx ▹ TVar ] TVar ⊧ (Σ *) TVar Ψ ⇓ (Σ *) TVar Ψ
-ren = cata ⌞_⌟ #_ op ex `wkr
+ren = cata ⌞_⌟ #_ op ex wkr
 
 wks : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ} Φ
   → [ TCtx ▹ TVar ] (Σ *) TVar Ψ ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· (Σ *) TVar Ψ
