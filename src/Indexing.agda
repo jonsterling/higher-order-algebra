@@ -2,6 +2,7 @@ module Indexing where
 
 open import Agda.Primitive
 open import Prelude
+  hiding (map)
 
 --------------------------------------------------------------------------------
 -- Indexing
