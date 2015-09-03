@@ -123,20 +123,20 @@ pattern [_]_ σ e = ex (_ , e , σ)
 cata
   : {Σ : Sign} {Ξ : TCtx} {Ψ : MCtx Σ Ξ}
   → {ϑ : TCtx → Set₀} {𝔇 : TCtx → Set₀} {ϕ : TCtx → Set₀}
-  → ϑ ~> 𝔇
-  → MVar Σ 𝔇 Ψ ~> 𝔇
-  → ⟦ Σ ⊧ 𝔇 ⟧₀ ~> 𝔇
-  → [ TCtx ▹ ϕ ] (Σ *) ϕ Ψ ⇉ 𝔇 ~> 𝔇
-  → (∀ Φ → [ TCtx ▹ ϕ ] ϑ ⊧ (_⧺ Φ) ↑*· ϕ ⇓ (_⧺ Φ) ↑*· ϑ)
+  → (`va : ϑ ~> 𝔇)
+  → (`me : MVar Σ 𝔇 Ψ ~> 𝔇)
+  → (`op : ⟦ Σ ⊧ 𝔇 ⟧₀ ~> 𝔇)
+  → (`ex : [ TCtx ▹ ϕ ] (Σ *) ϕ Ψ ⇉ 𝔇 ~> 𝔇)
+  → (`wk : (∀ Φ → [ TCtx ▹ ϕ ] ϑ ⊧ (_⧺ Φ) ↑*· ϕ ⇓ (_⧺ Φ) ↑*· ϑ))
   → [ TCtx ▹ ϕ ] ϑ ⊧ (Σ *) ϕ Ψ ⇓ 𝔇
 cata `va `me `op `ex `wkn ⌞ i ⌟ ρ =
   `va ·≪ ρ i
-cata `va `me `op `ex `wkn (# μ ⟨ xs ⟩) ρ =
-  `me (μ ⟨ map (λ e → cata `va `me `op `ex `wkn e ρ) xs ⟩) -- need sized types?
-cata `va `me `op `ex `wkn ([ σ ] e) ρ =
-  `ex ·≪ , e , λ i → cata `va `me `op `ex `wkn (σ i) ρ
-cata {Σ = Σ} `va `me `op `ex `wkn (op (𝔣 , κ)) ρ =
-  `op ·≪ 𝔣 , λ i → cata `va `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
+cata `va `me `op `ex `wk (# μ ⟨ xs ⟩) ρ =
+  `me (μ ⟨ map (λ e → cata `va `me `op `ex `wk e ρ) xs ⟩) -- need sized types?
+cata `va `me `op `ex `wk ([ σ ] e) ρ =
+  `ex ·≪ , e , λ i → cata `va `me `op `ex `wk (σ i) ρ
+cata {Σ = Σ} `va `me `op `ex `wk (op (𝔣 , κ)) ρ =
+  `op ·≪ 𝔣 , λ i → cata `va `me `op `ex `wk (κ i) (λ x → `wk (valence Σ 𝔣 i) x ρ)
 
 ren : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ}
   → [ TCtx ▹ TVar ] TVar ⊧ (Σ *) TVar Ψ ⇓ (Σ *) TVar Ψ
