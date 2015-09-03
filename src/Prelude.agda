@@ -26,13 +26,14 @@ infixl 2 _⋙_
 infixl 5 _↑*
 infixl 5 _↑*·_
 infixr 0 _·≪_
-infixr 1 _⊎_
+infixr 5 s_
 infixr 1 _-_
 infixr 1 _×_
+infixr 1 _⊎_
 infixr 3 _⋘_
 infixr 4 _,_
-infixr 6 _∷_
 infixr 5 _++_
+infixr 6 _∷_
 
 _←_ : ∀ {a b} → Set a → Set b → Set (a ⊔ b)
 B ← A = A → B
@@ -217,7 +218,7 @@ Dec A = ¬ A ⊎ A
 
 data Nat : Set₀ where
   z : Nat
-  s : (n : Nat) → Nat
+  s_ : (n : Nat) → Nat
 {-# BUILTIN NATURAL Nat #-}
 
 _+_ : Nat → Nat → Nat
@@ -226,7 +227,7 @@ z + n = n
 
 data Fin : Nat → Set₀ where
   z : ∀ {m} → Fin (s m)
-  s : ∀ {m} → (i : Fin m) → Fin (s m)
+  s_ : ∀ {m} → (i : Fin m) → Fin (s m)
 
 data Vec {a} (A : Set a) : Nat → Set a where
   [] : Vec A z

@@ -57,7 +57,7 @@ data ⟪_⟫ {i} {O : Set i} (𝔠 : O ▹ O) (o : O) : Set i where
   }
 
 plug : ∀ {I O : Set₀} {i o X} (𝔠 : I ▹ O)
-  → Π[ s ∶ ∐ O (shp 𝔠) ] Π[ p₀ ∶ pos 𝔠 s ] Π[ p₁ ∶ pos 𝔠 s ] Dec (p₀ ≡ p₁)
+  → Π[ sh ∶ ∐ O (shp 𝔠) ] Π[ p₀ ∶ pos 𝔠 sh ] Π[ p₁ ∶ pos 𝔠 sh ] Dec (p₀ ≡ p₁)
   → X i → ⟦ 𝒥 𝔠 ⟧ X (o , i) → ⟦ 𝔠 ⟧ X o
 plug {o = o} {X = X} 𝔠 eq? x ((sh , po , refl) , k) = sh , aux where
   aux : Π[ po' ∶ pos 𝔠 (o , sh) ] X (nxt 𝔠 ((o , sh) , po'))
@@ -80,7 +80,7 @@ plug {o = o} {X = X} 𝔠 eq? x ((sh , po , refl) , k) = sh , aux where
   }
 
 zip : ∀ {I : Set₀} {ir ih} (𝔠 : I ▹ I)
-  → Π[ s ∶ ∐ I (shp 𝔠) ] Π[ p₀ ∶ pos 𝔠 s ] Π[ p₁ ∶ pos 𝔠 s ] Dec (p₀ ≡ p₁)
+  → Π[ sh ∶ ∐ I (shp 𝔠) ] Π[ p₀ ∶ pos 𝔠 sh ] Π[ p₁ ∶ pos 𝔠 sh ] Dec (p₀ ≡ p₁)
   → ⟪ 𝒵 𝔠 ⟫ (ir , ih) → ⟪ 𝔠 ⟫ ih → ⟪ 𝔠 ⟫ ir
 zip 𝔠 eq? (into ((false , refl) , _)) t =
   t
@@ -120,9 +120,9 @@ con : ∀ {A n}
 con x xs = into (x , ! xs)
 
 decVecPos : {A : Set₀}
-  → Π[ s ∶ ∐ Nat (shp (VecC A)) ]
-    Π[ p₀ ∶ pos (VecC A) s ]
-    Π[ p₁ ∶ pos (VecC A) s ]
+  → Π[ sh ∶ ∐ Nat (shp (VecC A)) ]
+    Π[ p₀ ∶ pos (VecC A) sh ]
+    Π[ p₁ ∶ pos (VecC A) sh ]
     Dec (p₀ ≡ p₁)
 decVecPos (z , _) () _
 decVecPos (s fst , snd) tt tt = true , refl
