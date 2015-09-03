@@ -113,7 +113,7 @@ cata `v `me `op `ex `wkn (# μ ⟨ xs ⟩) ρ =
   `me (μ ⟨ map (λ e → cata `v `me `op `ex `wkn e ρ) xs ⟩) -- need sized types?
 cata `v `me `op `ex `wkn (e [ σ ]) ρ =
   `ex ·≪ , e , λ i → cata `v `me `op `ex `wkn (σ i) ρ
-cata {Σ = Σ} {𝔇 = 𝔇} `v `me `op `ex `wkn (op (𝔣 , κ)) ρ =
+cata {Σ = Σ} `v `me `op `ex `wkn (op (𝔣 , κ)) ρ =
   `op ·≪ 𝔣 , λ i → cata `v `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
 
 wkn : ∀ {𝔇 : TCtx → Set₀} Φ
@@ -133,7 +133,7 @@ ren = cata ⌞_⌟ #_ op ex `wkr
 
 wks : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ} Φ
   → [ TCtx ▹ TVar ] (Σ *) TVar Ψ ⊧ (_⧺ Φ) ↑*· TVar ⇓ (_⧺ Φ) ↑*· (Σ *) TVar Ψ
-wks {Σ = Σ} {Ξ = Ξ} {Ψ = Ψ} Φ = wkn Φ ⌞_⌟ ren
+wks Φ = wkn Φ ⌞_⌟ ren
 
 sub : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ}
   → [ TCtx ▹ TVar ] (Σ *) TVar Ψ ⊧ (Σ *) TVar Ψ ⇓ (Σ *) TVar Ψ
