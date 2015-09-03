@@ -69,7 +69,7 @@ plug {o = o} {X = X} 𝔠 eq? x ((sh , po , refl) , k) = sh , aux where
 
 𝒵 : ∀ {I : Set₀} → I ▹ I → (I × I) ▹ (I × I)
 𝒵 {I = I} 𝔠 = record
-  { shp = λ { (ir , ih) → ir ≡ ih + ∐[ ip ∶ I ] ⟦ 𝒥 𝔠 ⟧ ⟪ 𝔠 ⟫ (ip , ih) }
+  { shp = λ { (ir , ih) → ir ≡ ih ⊎ ∐[ ip ∶ I ] ⟦ 𝒥 𝔠 ⟧ ⟪ 𝔠 ⟫ (ip , ih) }
   ; pos = λ
     { (_ , false , _) → ⊥
     ; (_ , true , _) → ⊤

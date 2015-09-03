@@ -26,12 +26,13 @@ infixl 2 _⋙_
 infixl 5 _↑*
 infixl 5 _↑*·_
 infixr 0 _·≪_
-infixr 1 _+_
+infixr 1 _⊎_
 infixr 1 _-_
 infixr 1 _×_
 infixr 3 _⋘_
 infixr 4 _,_
-infixr 5 _∷_
+infixr 6 _∷_
+infixr 5 _++_
 
 _←_ : ∀ {a b} → Set a → Set b → Set (a ⊔ b)
 B ← A = A → B
@@ -195,8 +196,8 @@ A × B = ∐ A λ _ → B
   → (∐ A B → C) → Π A ·≪ B ⋙ Yo C
 ↑⇒ f x y = f (x , y)
 
-_+_ : ∀ {i} → (A : Set i) (B : Set i) → Set i
-A + B = ∐ Bool ·≪ pick lzero A B
+_⊎_ : ∀ {i} → (A : Set i) (B : Set i) → Set i
+A ⊎ B = ∐ Bool ·≪ pick lzero A B
 
 pattern inl a = false , a
 pattern inr b = true  , b
@@ -205,12 +206,12 @@ _-_ : (X : Set₀) (x : X) → Set₀
 X - x = ∐[ y ∶ X ] ¬ (x ≡ y)
 
 Dec : ∀ (A : Set₀) → Set₀
-Dec A = ¬ A + A
+Dec A = ¬ A ⊎ A
 
 [_,_] : ∀ {a x} {A : Set a} {B : Set a} {X : Set x}
   → (A → X)
   → (B → X)
-  → (A + B → X)
+  → (A ⊎ B → X)
 [ f , g ] (inl a) = f a
 [ f , g ] (inr b) = g b
 
@@ -218,6 +219,10 @@ data Nat : Set₀ where
   z : Nat
   s : (n : Nat) → Nat
 {-# BUILTIN NATURAL Nat #-}
+
+_+_ : Nat → Nat → Nat
+z + n = n
+(s m) + n = s (m + n)
 
 data Fin : Nat → Set₀ where
   z : ∀ {m} → Fin (s m)
@@ -234,6 +239,14 @@ map f (x ∷ xs) = f x ∷ map f xs
 idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
 idx (x ∷ xs) z = x
 idx (x ∷ xs) (s i) = idx xs i
+
+tab : ∀ {a n} {A : Set a} → (Fin n → A) → Vec A n
+tab {n = z} f = []
+tab {n = s n} f = f z ∷ tab λ i → f (s i)
+
+_++_ : ∀ {a m n} {A : Set a} → Vec A m → Vec A n → Vec A (m + n)
+[] ++ ys = ys
+(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 
 ∫↓ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
 ∫↓ {X = X} P = ∀ {x} → P x
