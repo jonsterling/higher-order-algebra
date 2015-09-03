@@ -1,6 +1,9 @@
 module Syntax where
 
 open import Agda.Primitive
+import Cats
+open Cats.Cats
+  hiding (Op)
 open import Containers
 open import Prelude
 
@@ -31,6 +34,12 @@ infix 1 [_▹_]_⇉_
   → (σ → Set₀)
   → (σ → Set₀)
 [ σ ▹ π ] 𝔏 ⇉ 𝔇 = Lan oY _×_ π 𝔏 ⋘ 𝔇
+
+PSh : ∀ {o h} → Category o h → Set _
+PSh 𝒞 = 𝒞 ⇒₀ Set𝒸 lzero
+
+PSh𝒸 : ∀ {o h} → Category o h → Category _ _
+PSh𝒸 𝒞 = 𝒞 ⇒₀𝒸 Set𝒸 lzero
 
 TCtx : Set
 TCtx = Nat
@@ -111,14 +120,14 @@ cata
   → [ TCtx ▹ ϕ ] (Σ *) ϕ Ψ ⇉ 𝔇 ~> 𝔇
   → (∀ Φ → [ TCtx ▹ ϕ ] ϑ ⊧ (_⧺ Φ) ↑*· ϕ ⇓ (_⧺ Φ) ↑*· ϑ)
   → [ TCtx ▹ ϕ ] ϑ ⊧ (Σ *) ϕ Ψ ⇓ 𝔇
-cata `v `me `op `ex `wkn ⌞ i ⌟ ρ =
-  `v ·≪ ρ i
-cata `v `me `op `ex `wkn (# μ ⟨ xs ⟩) ρ =
-  `me (μ ⟨ map (λ e → cata `v `me `op `ex `wkn e ρ) xs ⟩) -- need sized types?
-cata `v `me `op `ex `wkn (e [ σ ]) ρ =
-  `ex ·≪ , e , λ i → cata `v `me `op `ex `wkn (σ i) ρ
-cata {Σ = Σ} `v `me `op `ex `wkn (op (𝔣 , κ)) ρ =
-  `op ·≪ 𝔣 , λ i → cata `v `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
+cata `va `me `op `ex `wkn ⌞ i ⌟ ρ =
+  `va ·≪ ρ i
+cata `va `me `op `ex `wkn (# μ ⟨ xs ⟩) ρ =
+  `me (μ ⟨ map (λ e → cata `va `me `op `ex `wkn e ρ) xs ⟩) -- need sized types?
+cata `va `me `op `ex `wkn (e [ σ ]) ρ =
+  `ex ·≪ , e , λ i → cata `va `me `op `ex `wkn (σ i) ρ
+cata {Σ = Σ} `va `me `op `ex `wkn (op (𝔣 , κ)) ρ =
+  `op ·≪ 𝔣 , λ i → cata `va `me `op `ex `wkn (κ i) (λ x → `wkn (valence Σ 𝔣 i) x ρ)
 
 ren : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ}
   → [ TCtx ▹ TVar ] TVar ⊧ (Σ *) TVar Ψ ⇓ (Σ *) TVar Ψ
@@ -132,41 +141,49 @@ sub : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ}
   → [ TCtx ▹ TVar ] (Σ *) TVar Ψ ⊧ (Σ *) TVar Ψ ⇓ (Σ *) TVar Ψ
 sub = cata id #_ op ex wks
 
+Ren𝒸 : Category _ _
+Ren𝒸 = record
+  { obj = Nat
+  ; hom = λ Γ Δ → TVar Γ → TVar Δ
+  ; idn = λ i → i
+  ; cmp = λ ρ₁ ρ₀ i → ρ₁ (ρ₀ i)
+  }
+
+Sub𝒸 : {Σ : Sign} {Θ : TCtx} (Ψ : MCtx Σ Θ) → Category _ _
+Sub𝒸 {Σ = Σ} Ψ = record
+  { obj = TCtx
+  ; hom = λ Γ Δ → TVar Γ → (Σ *) TVar Ψ Δ
+  ; idn = ⌞_⌟
+  ; cmp = λ σ₁ σ₀ i → sub (σ₀ i) σ₁
+  }
+
+TVar⇒₀ : Ren𝒸 ⇒₀ Set𝒸 _
+TVar⇒₀ = record
+  { map₀ = TVar
+  ; map₁ = id
+  }
+
+Σ*-monad : (Σ : Sign) {Θ : TCtx} (Ψ : MCtx Σ Θ) → RMonad TVar⇒₀
+Σ*-monad Σ Ψ = record
+  { G = (Σ *) TVar Ψ
+  ; ret = ⌞_⌟
+  ; ext = λ m σ → sub σ m
+  }
+
 ret : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ}
   → TVar Γ → (Σ *) TVar Ψ Γ
-ret = ⌞_⌟
+ret {Σ = Σ} {Ψ = Ψ} = RMonad.ret (Σ*-monad Σ Ψ)
+
+_=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
+  → (TVar Γ → (Σ *) TVar Ψ Δ)
+  → ((Σ *) TVar Ψ Γ → (Σ *) TVar Ψ Δ)
+_=≪_ {Σ = Σ} {Ψ = Ψ} = RMonad.ext (Σ*-monad Σ Ψ)
 
 _≫=_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
   → (Σ *) TVar Ψ Γ
   → (TVar Γ → (Σ *) TVar Ψ Δ)
   → (Σ *) TVar Ψ Δ
-m ≫= σ = sub m σ
-
-_=≪_ : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ}
-  → (TVar Γ → (Σ *) TVar Ψ Δ)
-  → ((Σ *) TVar Ψ Γ → (Σ *) TVar Ψ Δ)
-σ =≪ m = sub m σ
-
-Ren : TCtx → TCtx → Set₀
-Ren Γ Δ = TVar Γ → TVar Δ
-
-idnR : ∀ {Γ} → Ren Γ Γ
-idnR = id
-
-cmpR : ∀ {Γ Δ Ξ} → Ren Δ Ξ → Ren Γ Δ → Ren Γ Ξ
-cmpR = _⋘′_
-
-Sub : ∀ (Σ : Sign) {Ξ} (Ψ : MCtx Σ Ξ)
-  → TCtx → TCtx → Set₀
-Sub Σ Ψ Γ Δ = TVar Γ → (Σ *) TVar Ψ Δ
-
-idnS : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ} {Γ}
-  → Sub Σ Ψ Γ Γ
-idnS = ⌞_⌟
-
-cmpS : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ} {Γ Δ Θ}
-  → Sub Σ Ψ Δ Θ → Sub Σ Ψ Γ Δ → Sub Σ Ψ Γ Θ
-cmpS = λ g f → (λ x → sub x g) ⋘′ f
+m ≫= σ = σ =≪ m
 
 -- explicit substitutions
 
