@@ -3,7 +3,7 @@ module Syntax where
 infix 0 ⌞_⌟
 infix 6 #_
 infixl 0 _·_
-infixr 1 _+_
+infixr 1 _⧺_
 infixr 1 _=≪_
 infixl 1 _≫=_
 infix 0 ⟦_⊧_⟧₀
@@ -15,21 +15,23 @@ open Cats.Cats
 open import Prelude
   hiding (δ; _+_)
 
-_+_ : Nat → Nat → Nat
-m + z = m
-m + (s n) = s (m + n)
+TCtx : Set
+TCtx = Nat
+
+TVar : TCtx → Set
+TVar = Fin
+
+pattern ∅ = z
+
+_⧺_ : TCtx → TCtx → TCtx
+Γ ⧺ ∅ = Γ
+Γ ⧺ (s Δ) = s (Γ ⧺ Δ)
 
 PSh : ∀ {o h} → Category o h → Set _
 PSh 𝒞 = 𝒞 ⇒₀ Set𝒸 lzero
 
 PSh𝒸 : ∀ {o h} → Category o h → Category _ _
 PSh𝒸 𝒞 = 𝒞 ⇒₀𝒸 Set𝒸 lzero
-
-TCtx : Set
-TCtx = Nat
-
-TVar : TCtx → Set
-TVar = Fin
 
 Ren𝒸 : Category _ _
 Ren𝒸 = record
@@ -68,24 +70,24 @@ record Sign : Set₁ where
   open MVar public
 open Sign public
 
-wkr : ∀ {Γ Δ} k
+wkr : ∀ {Γ Δ} Φ
   → (ρ : TVar Γ → TVar Δ)
-  → (TVar (Γ + k) → TVar (Δ + k))
-wkr z ρ i = ρ i
-wkr (s k) ρ z = z
-wkr (s k) ρ (s i) = s (wkr k ρ i)
+  → (TVar (Γ ⧺ Φ) → TVar (Δ ⧺ Φ))
+wkr ∅ ρ i = ρ i
+wkr (s Φ) ρ ∅ = ∅
+wkr (s Φ) ρ (s i) = s (wkr Φ ρ i)
 
 δᵣ* : Nat → PSh𝒸 Ren𝒸 ⇒₀ PSh𝒸 Ren𝒸
-δᵣ* k = record
+δᵣ* Φ = record
   { map₀ = λ ϕ → record
-    { map₀ = λ i → map₀ ϕ (i + k)
-    ; map₁ = λ ρ → map₁ ϕ (wkr k ρ)
+    { map₀ = λ i → map₀ ϕ (i ⧺ Φ)
+    ; map₁ = λ ρ → map₁ ϕ (wkr Φ ρ)
     }
   ; map₁ = λ α → record { com = com α }
   }
 
 ⟦_⊧_⟧₀ : (Σ : Sign) (ϕ : TCtx → Set) (Γ : TCtx) → Set
-⟦ Σ ⊧ ϕ ⟧₀ Γ = ∐[ 𝔣 ∶ 𝒪 Σ ] Π[ i ∶ TVar (arity Σ 𝔣) ] ϕ (Γ + valence Σ 𝔣 i)
+⟦ Σ ⊧ ϕ ⟧₀ Γ = ∐[ 𝔣 ∶ 𝒪 Σ ] Π[ i ∶ TVar (arity Σ 𝔣) ] ϕ (Γ ⧺ valence Σ 𝔣 i)
 
 ⟦_⊧_⟧₁ᵣ
   : (Σ : Sign)
@@ -127,9 +129,9 @@ mutual
   ren ρ (# μ) = # var μ ⟨ map (ren ρ) (vec μ) ⟩ -- need sized types?
   ren {Σ = Σ} ρ (op xs) = op (⟦ Σ ⊧ ren⇒₀ ⟧₁ᵣ ρ xs)
 
-wks : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ} k
+wks : ∀ {Σ Θ} {Ψ : MCtx Σ Θ} {Γ Δ} Φ
   → (ρ : TVar Γ → (Σ *) Ψ Δ)
-  → (TVar (Γ + k) → (Σ *) Ψ (Δ + k))
+  → (TVar (Γ ⧺ Φ) → (Σ *) Ψ (Δ ⧺ Φ))
 wks z σ i = σ i
 wks (s k) σ z = ⌞ z ⌟
 wks (s k) σ (s i) = ren s (wks k σ i)
