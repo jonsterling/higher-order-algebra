@@ -4,7 +4,6 @@ open import Agda.Primitive
 import Containers
 module C = Containers
 open import Prelude
-  hiding (map)
 open import Indexing
 
 infix 0 ⟪_⟫

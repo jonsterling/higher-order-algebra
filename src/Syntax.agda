@@ -132,7 +132,7 @@ cata
 cata `va `me `op `ex `wkn ⌞ i ⌟ ρ =
   `va ·≪ ρ i
 cata `va `me `op `ex `wk (# μ ⟨ xs ⟩) ρ =
-  `me (μ ⟨ map (λ e → cata `va `me `op `ex `wk e ρ) xs ⟩) -- need sized types?
+  `me (μ ⟨ mapv (λ e → cata `va `me `op `ex `wk e ρ) xs ⟩) -- need sized types?
 cata `va `me `op `ex `wk ([ σ ] e) ρ =
   `ex ·≪ , e , λ i → cata `va `me `op `ex `wk (σ i) ρ
 cata {Σ = Σ} `va `me `op `ex `wk (op (𝔣 , κ)) ρ =
@@ -236,7 +236,7 @@ module Examples where
       ; 𝔄 = λ
         { lm → , 1 ∷ []
         ; ap → , 0 ∷ 0 ∷ []
-        ; (def Φ) → , def-aux Φ ++ Φ ∷ []
+        ; (def Φ) → , def-aux Φ ++v Φ ∷ []
         ; (tel Φ) → , tel-aux Φ z
         }
       }

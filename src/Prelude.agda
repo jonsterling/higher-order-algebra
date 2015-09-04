@@ -26,13 +26,14 @@ infixl 2 _⋙_
 infixl 5 _↑*
 infixl 5 _↑*·_
 infixr 0 _·≪_
-infixr 5 s_
+infixr 6 s_
 infixr 1 _-_
 infixr 1 _×_
 infixr 1 _⊎_
 infixr 3 _⋘_
 infixr 4 _,_
-infixr 5 _++_
+infixr 5 _++l_
+infixr 5 _++v_
 infixr 6 _∷_
 
 _←_ : ∀ {a b} → Set a → Set b → Set (a ⊔ b)
@@ -229,13 +230,29 @@ data Fin : Nat → Set₀ where
   z : ∀ {m} → Fin (s m)
   s_ : ∀ {m} → (i : Fin m) → Fin (s m)
 
+data List {a} (A : Set a) : Set a where
+  [] : List A
+  _∷_ : (x : A) (xs : List A) → List A
+
+_++l_ : ∀ {a} {A : Set a} → List A → List A → List A
+[] ++l ys = ys
+(x ∷ xs) ++l ys = x ∷ (xs ++l ys)
+
+mapl : ∀ {a} {A : Set a} {B : Set} (f : A → B) → (List A → List B)
+mapl f [] = []
+mapl f (x ∷ xs) = f x ∷ mapl f xs
+
 data Vec {a} (A : Set a) : Nat → Set a where
   [] : Vec A z
   _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
 
-map : ∀ {a} {A : Set a} {B : Set} {n} (f : A → B) → (Vec A n → Vec B n)
-map f [] = []
-map f (x ∷ xs) = f x ∷ map f xs
+_++v_ : ∀ {a m n} {A : Set a} → Vec A m → Vec A n → Vec A (m + n)
+[] ++v ys = ys
+(x ∷ xs) ++v ys = x ∷ (xs ++v ys)
+
+mapv : ∀ {a} {A : Set a} {B : Set} {n} (f : A → B) → (Vec A n → Vec B n)
+mapv f [] = []
+mapv f (x ∷ xs) = f x ∷ mapv f xs
 
 idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
 idx (x ∷ xs) z = x
@@ -244,10 +261,6 @@ idx (x ∷ xs) (s i) = idx xs i
 tab : ∀ {a n} {A : Set a} → (Fin n → A) → Vec A n
 tab {n = z} f = []
 tab {n = s n} f = f z ∷ tab λ i → f (s i)
-
-_++_ : ∀ {a m n} {A : Set a} → Vec A m → Vec A n → Vec A (m + n)
-[] ++ ys = ys
-(x ∷ xs) ++ ys = x ∷ (xs ++ ys)
 
 ∫↓ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
 ∫↓ {X = X} P = ∀ {x} → P x
