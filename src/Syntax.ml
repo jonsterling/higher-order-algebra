@@ -79,38 +79,54 @@ sig
   module Sigma :
   sig
     open List
+    type (_,_) depth =
+      | DZ : ('m, 'm) depth
+      | DS : ('m, 'n) depth -> ('m, 'n Nat.s) depth
     type (_,_) op = ..
     type (_,_) op += Ax : ([`Ax], ni) op
-    type (_,_) op += Lm : ([`Lm], ('x Ctx.one, ni) co) op
+    type (_,_) op += Lm : ('m, 'n) depth -> ([`Lm], (('m, 'n) Ctx.t, ni) co) op
     type (_,_) op += Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
     include Sign.S
       with type ('f, 'valences) op := ('f, 'valences) op
   end
   include (module type of Sign.Make(Sigma))
 
-  type clo = (Nat.z, Nat.z) tm
+  type 'n t = (Nat.z, 'n) tm
 
+  val dz : ('m, 'm) Sigma.depth
+  val ds : ('m, 'n) Sigma.depth -> ('m, 'n Nat.s) Sigma.depth
+  val z : ('m, 'n Nat.s) Var.t
+  val s : ('m, 'n) Var.t -> ('m, 'n Nat.s) Var.t
   val v : ('m, 'n) Var.t -> ('m, 'n) tm
   val ax : ('m, 'n) tm
-  val lm : ('m, 'n Nat.s) tm -> ('m, 'n) tm
+  val ln : ('n, 'o) Sigma.depth -> ('m, 'o) tm -> ('m, 'n) tm
+  val l1 : ('m, 'n Nat.s) tm -> ('m, 'n) tm
   val ( *@ ) : ('m, 'n) tm -> ('m, 'n) tm -> ('m, 'n) tm
 end =
 struct
   module Sigma =
   struct
     open List
+    type (_,_) depth =
+      | DZ : ('m, 'm) depth
+      | DS : ('m, 'n) depth -> ('m, 'n Nat.s) depth
     type (_,_) op = ..
     type (_,_) op += Ax : ([`Ax], ni) op
-    type (_,_) op += Lm : ([`Lm], ('x Ctx.one, ni) co) op
+    type (_,_) op += Lm : ('m, 'n) depth -> ([`Lm], (('m, 'n) Ctx.t, ni) co) op
     type (_,_) op += Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
   end
   include Sign.Make(Sigma)
 
-  type clo = (Nat.z, Nat.z) tm
+  type 'n t = (Nat.z, 'n) tm
 
+  let dz = Sigma.DZ
+  let ds n = Sigma.DS n
+  let z = Var.Z
+  let s n = Var.S n
   let v n = V n
   let ax = O (Sigma.Ax, N)
-  let lm e = O (Sigma.Lm, C (e, N))
+  let ln n e = O (Sigma.Lm n, C (e, N))
+  let l1 e = ln (ds dz) e
   let ( *@ ) e0 e1 = O (Sigma.Ap, C (e0, C (e1, N)))
 end
 
@@ -121,6 +137,9 @@ struct
   open Sigma
   open Var
 
-  let omega () : Lambda.clo =
-    lm (v Z *@ v Z) *@ lm (v Z *@ v Z)
+  let omega () : Nat.z Lambda.t =
+    l1 (v z *@ v z) *@ l1 (v z *@ v z)
+
+  let test0 () : Nat.z Lambda.t =
+    ln (ds @@ ds @@ ds @@ dz) (v @@ s @@ s @@ z)
 end
