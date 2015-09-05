@@ -5,7 +5,7 @@
 
 module Nat =
 struct
-  type z = [`Z]
+  type z = Z
   type 'n s = S
 end
 
@@ -21,14 +21,16 @@ end
 module Ctx =
 struct
   type (_,_) t =
-    | Z : ('m, 'm) t
+    | Z : ('m, 'n) t
     | S : ('m, 'n) t -> ('m, 'n Nat.s) t
   type 'x zero = ('x, 'x) t
   type 'x one  = ('x, 'x Nat.s) t
 end
 
 module Var = struct
-  type ('m, 'n) t = ('m Nat.s, 'n) Ctx.t
+  type (_,_) t =
+    | Z : ('m, 'n Nat.s) t
+    | S : ('m, 'n) t -> ('m, 'n Nat.s) t
 end
 
 module Sign = struct
@@ -86,7 +88,7 @@ sig
   end
   include (module type of Sign.Make(Sigma))
 
-  type 'z clo = ('z, 'z) tm
+  type clo = (Nat.z, Nat.z) tm
 
   val v : ('m, 'n) Var.t -> ('m, 'n) tm
   val ax : ('m, 'n) tm
@@ -104,7 +106,7 @@ struct
   end
   include Sign.Make(Sigma)
 
-  type 'x clo = ('x, 'x) tm
+  type clo = (Nat.z, Nat.z) tm
 
   let v n = V n
   let ax = O (Sigma.Ax, N)
@@ -114,11 +116,11 @@ end
 
 module Test =
 struct
-  open Ctx
   open Lambda
   open List
   open Sigma
+  open Var
 
-  let omega () : 'x Lambda.clo =
+  let omega () : Lambda.clo =
     lm (v Z *@ v Z) *@ lm (v Z *@ v Z)
 end
