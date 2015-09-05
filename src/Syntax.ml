@@ -6,7 +6,7 @@
 module Nat =
 struct
   type z = [`Z]
-  type 'n s = [`S of 'n]
+  type 'n s = S
 end
 
 module List =
