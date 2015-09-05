@@ -77,10 +77,10 @@ sig
   module Sigma :
   sig
     open List
-    type (_,_) op =
-      | Ax : ([`Ax], ni) op
-      | Lm : ([`Lm], ('x Ctx.one, ni) co) op
-      | Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
+    type (_,_) op = ..
+    type (_,_) op += Ax : ([`Ax], ni) op
+    type (_,_) op += Lm : ([`Lm], ('x Ctx.one, ni) co) op
+    type (_,_) op += Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
     include Sign.S
       with type ('f, 'valences) op := ('f, 'valences) op
   end
@@ -97,10 +97,10 @@ struct
   module Sigma =
   struct
     open List
-    type (_,_) op =
-      | Ax : ([`Ax], unit) op
-      | Lm : ([`Lm], ('x Ctx.one, ni) co) op
-      | Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
+    type (_,_) op = ..
+    type (_,_) op += Ax : ([`Ax], ni) op
+    type (_,_) op += Lm : ([`Lm], ('x Ctx.one, ni) co) op
+    type (_,_) op += Ap : ([`Ap], ('x Ctx.zero, ('x Ctx.zero, ni) co) co) op
   end
   include Sign.Make(Sigma)
 
