@@ -84,10 +84,6 @@ data Sp (Σ : Sign) (ϕ : TCtx → Set) (𝔣 : 𝒪 Σ) : List TCtx × TCtx →
   ε : ∀ {Γ} → Sp Σ ϕ 𝔣 ([] , Γ)
   _·_ : ∀ {Γ Φ Φ*} → ϕ (Φ ⧺ Γ) → Sp Σ ϕ 𝔣 (Φ* , Γ) → Sp Σ ϕ 𝔣 (Φ ∷ Φ* , Γ)
 
-data `Sp (Σ : Sign) (ϕ : TCtx → Set) (𝔣 : 𝒪 Σ) : ∀ {n} → Vec TCtx n × TCtx → Set where
-  ε : ∀ {Γ} → `Sp Σ ϕ 𝔣 ([] , Γ)
-  _·_ : ∀ {n Γ Φ Φ*} → ϕ (Φ ⧺ Γ) → `Sp Σ ϕ 𝔣 {n} (Φ* , Γ) → `Sp Σ ϕ 𝔣 (Φ ∷ Φ* , Γ)
-
 ⟦_⊧_⟧₀ : (Σ : Sign) (ϕ : TCtx → Set) (Γ : TCtx) → Set
 ⟦ Σ ⊧ ϕ ⟧₀ Γ = ∐[ 𝔣 ∶ 𝒪 Σ ] Sp Σ ϕ 𝔣 (𝔄 Σ 𝔣 , Γ)
 
