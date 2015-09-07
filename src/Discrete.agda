@@ -8,8 +8,8 @@ infix 5 _⊗_
 infix 0 rule[_#_]_⊢_
 
 nat : ∀ {n} → Fin n → Nat
-nat z = z
-nat (s i) = s (nat i)
+nat ze = ze
+nat (su i) = su (nat i)
 
 _⊗_ : Nat → Set → Set
 𝔏 ⊗ 𝔍 = ∐ (Fin 𝔏) (! 𝔍)
@@ -34,7 +34,7 @@ rule[ 𝔏 # 𝔍 ] δ ⊢ π = record
 
 TCtx = Nat
 
-pattern _▸* Δ = s Δ
+pattern _▸* Δ = su Δ
 
 -- ----------------
 -- Δ, X : * ⊢ X : *
@@ -50,9 +50,9 @@ pattern _▸* Δ = s Δ
 
 `⇒ : Pol TCtx TCtx
 `⇒ = rule[ 2 # TCtx ] (λ Δ → Δ) ⊢ λ
-  { (z) Δ → Δ
-  ; (s z) Δ → Δ
-  ; (s s ())
+  { (ze) Δ → Δ
+  ; (su ze) Δ → Δ
+  ; (su su ())
   }
 
 -- Δ, X : * ⊢ A : *
@@ -61,8 +61,8 @@ pattern _▸* Δ = s Δ
 
 `∀ : Pol TCtx TCtx
 `∀ = rule[ 1 # TCtx ] (λ Δ → Δ) ⊢ λ
-  { (z) Δ → Δ ▸*
-  ; (s ())
+  { (ze) Δ → Δ ▸*
+  ; (su ())
   }
 
 -- Δ, X : * ⊢ A : *
@@ -72,7 +72,7 @@ pattern _▸* Δ = s Δ
 
 `ς : Pol TCtx TCtx
 `ς = rule[ 2 # TCtx ] (λ Δ → Δ) ⊢ λ
-  { (z) Δ → Δ ▸*
-  ; (s z) Δ → Δ
-  ; (s s ())
+  { (ze) Δ → Δ ▸*
+  ; (su ze) Δ → Δ
+  ; (su su ())
   }

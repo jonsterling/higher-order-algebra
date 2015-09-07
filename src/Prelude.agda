@@ -26,7 +26,7 @@ infixl 2 _⋙_
 infixl 5 _↑*
 infixl 5 _↑*·_
 infixr 0 _·≪_
-infixr 6 s_
+infixr 6 su_
 infixr 1 _-_
 infixr 1 _×_
 infixr 1 _⊎_
@@ -218,17 +218,17 @@ Dec A = ¬ A ⊎ A
 [ f , g ] (inr b) = g b
 
 data Nat : Set₀ where
-  z : Nat
-  s_ : (n : Nat) → Nat
+  ze : Nat
+  su_ : (n : Nat) → Nat
 {-# BUILTIN NATURAL Nat #-}
 
 _+_ : Nat → Nat → Nat
-z + n = n
-(s m) + n = s (m + n)
+ze + n = n
+(su m) + n = su (m + n)
 
 data Fin : Nat → Set₀ where
-  z : ∀ {m} → Fin (s m)
-  s_ : ∀ {m} → (i : Fin m) → Fin (s m)
+  ze : ∀ {m} → Fin (su m)
+  su_ : ∀ {m} → (i : Fin m) → Fin (su m)
 
 data List {a} (A : Set a) : Set a where
   [] : List A
@@ -243,8 +243,8 @@ mapl f [] = []
 mapl f (x ∷ xs) = f x ∷ mapl f xs
 
 data Vec {a} (A : Set a) : Nat → Set a where
-  [] : Vec A z
-  _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (s n)
+  [] : Vec A ze
+  _∷_ : ∀ {n} → (x : A) (xs : Vec A n) → Vec A (su n)
 
 _++v_ : ∀ {a m n} {A : Set a} → Vec A m → Vec A n → Vec A (m + n)
 [] ++v ys = ys
@@ -255,12 +255,12 @@ mapv f [] = []
 mapv f (x ∷ xs) = f x ∷ mapv f xs
 
 idx : ∀ {a n} {A : Set a} → Vec A n → (Fin n → A)
-idx (x ∷ xs) z = x
-idx (x ∷ xs) (s i) = idx xs i
+idx (x ∷ xs) ze = x
+idx (x ∷ xs) (su i) = idx xs i
 
 tab : ∀ {a n} {A : Set a} → (Fin n → A) → Vec A n
-tab {n = z} f = []
-tab {n = s n} f = f z ∷ tab λ i → f (s i)
+tab {n = ze} f = []
+tab {n = su n} f = f ze ∷ tab λ i → f (su i)
 
 ∫↓ : ∀ {a b} {X : Set a} → (X → Set b) → Set (a ⊔ b)
 ∫↓ {X = X} P = ∀ {x} → P x

@@ -43,22 +43,22 @@ TCtx = Nat
 TVar : TCtx → Set
 TVar = Fin
 
-pattern ∅ = z
+pattern ∅ = ze
 
 _⧺_ : TCtx → TCtx → TCtx
 ∅ ⧺ Γ = Γ
-(s Φ) ⧺ Γ = s (Φ ⧺ Γ)
+(su Φ) ⧺ Γ = su (Φ ⧺ Γ)
 
 wkn : ∀ {𝔇 : TCtx → Set₀} Φ
   → TVar ~> 𝔇
   → [ TCtx ▹ TVar ] TVar ⊧ 𝔇 ⇓ 𝔇
   → [ TCtx ▹ TVar ] 𝔇 ⊧ (Φ ⧺_) ↑*· TVar ⇓ (Φ ⧺_) ↑*· 𝔇
-wkn  ∅ `z `s i ρ =
+wkn  ∅ `ze `su i ρ =
   ρ i
-wkn (s Φ) `z `s z ρ =
-  `z z
-wkn (s Φ) `z `s (s i) ρ =
-  `s (wkn Φ `z `s i ρ) s_
+wkn (su Φ) `ze `su ze ρ =
+  `ze ze
+wkn (su Φ) `ze `su (su i) ρ =
+  `su (wkn Φ `ze `su i ρ) su_
 
 wkr : ∀ Φ → [ TCtx ▹ TVar ] TVar ⊧ (Φ ⧺_) ↑*· TVar ⇓ (Φ ⧺_) ↑*· TVar
 wkr Φ = wkn Φ id (λ x → ¿ x)
@@ -198,9 +198,9 @@ sid = ⌞_⌟
 
 infixr 0 _∷ₑ_
 _∷ₑ_ : ∀ {Σ : Sign} {Ξ} {Ψ : MCtx Σ Ξ} {Γ A}
-  → A → Env Γ A → Env (s Γ) A
-_∷ₑ_ fz fs z = fz
-_∷ₑ_ fz fs (s m) = fs m
+  → A → Env Γ A → Env (su Γ) A
+_∷ₑ_ fz fs ze = fz
+_∷ₑ_ fz fs (su m) = fs m
 
 module Examples where
   module Λ where
@@ -215,12 +215,12 @@ module Examples where
       tel : TCtx → Op
 
     def-aux : (n : Nat) → List Nat
-    def-aux z = []
-    def-aux (s n) = 0 ∷ def-aux n
+    def-aux ze = []
+    def-aux (su n) = 0 ∷ def-aux n
 
     tel-aux : (n : Nat) (cur : Nat) → List Nat
-    tel-aux z cur = []
-    tel-aux (s n) cur = cur ∷ tel-aux n (s cur)
+    tel-aux ze cur = []
+    tel-aux (su n) cur = cur ∷ tel-aux n (su cur)
 
     Σ : Sign
     Σ = record
@@ -230,13 +230,13 @@ module Examples where
         ; lm → 1 ∷ []
         ; ap → 0 ∷ 0 ∷ []
         ; (def Φ) → def-aux Φ ++l Φ ∷ []
-        ; (tel Φ) → tel-aux Φ z
+        ; (tel Φ) → tel-aux Φ ze
         }
       }
 
     ƛ_ : ∀ {Ξ Γ} {Ψ : MCtx Σ Ξ}
-      → Tm Σ Ψ (s Γ) → Tm Σ Ψ Γ
-    ƛ_ e = lm ·* ` z · ε
+      → Tm Σ Ψ (su Γ) → Tm Σ Ψ Γ
+    ƛ_ e = lm ·* ` ze · ε
 
     _⊙_ : ∀ {Ξ Γ} {Ψ : MCtx Σ Ξ}
       → Tm Σ Ψ Γ → Tm Σ Ψ Γ → Tm Σ Ψ Γ
@@ -244,38 +244,38 @@ module Examples where
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ ap(lm(x. M[x]); N[])
     test₀ : Tm Σ (1 ∷ 0 ∷ []) ∅
-    test₀ = (ƛ #₁ z [ ` z ]) ⊙ #₀ (s z)
+    test₀ = (ƛ #₁ ze [ ` ze ]) ⊙ #₀ (su ze)
 
     -- Λ ⊧ N : [0], M : [1] ▸ ∅ ⊢ M[N[]]
     test₁ : Tm Σ (1 ∷ 0 ∷ []) ∅
-    test₁ = #₁ z [ #₀ (s z) ]
+    test₁ = #₁ ze [ #₀ (su ze) ]
 
     test₂ : Tm Σ [] 1
-    test₂ = def 3 ·* ` z · (<> ·* ε) · ` z · ` s s s z · ε
+    test₂ = def 3 ·* ` ze · (<> ·* ε) · ` ze · ` su su su ze · ε
 
     test₃ : Tm Σ [] 1
-    test₃ = tel 3 ·* ` z · ` s z · ` s s z · ε
+    test₃ = tel 3 ·* ` ze · ` su ze · ` su su ze · ε
 
     test₄ : Tm Σ [] ∅
-    test₄ = lm ·* ` z · ε
+    test₄ = lm ·* ` ze · ε
 
     test₅ : Tm Σ [] 1
-    test₅ = ap ·* ` z · (lm ·* ` z · ε) · ε
+    test₅ = ap ·* ` ze · (lm ·* ` ze · ε) · ε
 
     test₆ : Tm Σ [] ∅
     test₆ = test₂ ≫= λ
-      { z → test₄
-      ; (s ())
+      { ze → test₄
+      ; (su ())
       }
 
     test₇ :
       test₆
       ≡
       op ( def 3
-         , op (lm , ⌞ z ⌟ · ε)
+         , op (lm , ⌞ ze ⌟ · ε)
          · op (<> , ε)
-         · op (lm , ⌞ z ⌟ · ε)
-         · op (lm , ⌞ z ⌟ · ε)
+         · op (lm , ⌞ ze ⌟ · ε)
+         · op (lm , ⌞ ze ⌟ · ε)
          · ε
          )
     test₇ = refl

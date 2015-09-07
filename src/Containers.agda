@@ -99,24 +99,24 @@ VecC A = record
   }
   where
   shp′ : Nat → Set₀
-  shp′ z = ⊤
-  shp′ (s n) = A
+  shp′ ze = ⊤
+  shp′ (su n) = A
 
   pos′ : ∐ Nat shp′ → Set₀
-  pos′ (z , _) = ⊥
-  pos′ (s n , _) = ⊤
+  pos′ (ze , _) = ⊥
+  pos′ (su n , _) = ⊤
 
   nxt′ : ∐ (∐ Nat shp′) pos′ → Nat
-  nxt′ ((z , _) , ())
-  nxt′ ((s n , _) , _) = n
+  nxt′ ((ze , _) , ())
+  nxt′ ((su n , _) , _) = n
 
-nil : ∀ {A} → ⟪ VecC A ⟫ z
+nil : ∀ {A} → ⟪ VecC A ⟫ ze
 nil = into (_ , λ())
 
 con : ∀ {A n}
   → A
   → ⟪ VecC A ⟫ n
-  → ⟪ VecC A ⟫ (s n)
+  → ⟪ VecC A ⟫ (su n)
 con x xs = into (x , ! xs)
 
 decVecPos : {A : Set₀}
@@ -124,5 +124,5 @@ decVecPos : {A : Set₀}
     Π[ p₀ ∶ pos (VecC A) sh ]
     Π[ p₁ ∶ pos (VecC A) sh ]
     Dec (p₀ ≡ p₁)
-decVecPos (z , _) () _
-decVecPos (s fst , snd) tt tt = true , refl
+decVecPos (ze , _) () _
+decVecPos (su fst , snd) tt tt = true , refl
